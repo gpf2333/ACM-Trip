@@ -1,0 +1,78 @@
+https://codeforces.com/contest/1092/problem/C
+
+题目大意：
+有一个字符串长度为n
+接下来给你2*n-2个字符串
+可能为前缀也可能为后缀
+
+让你判断每个字符串是前缀还是后缀
+
+
+思路：
+先将字符串按长度排序
+枚举长度为1和n-1的字符串
+并拼接，然后将剩下每个字符串与此拼接字符串比对
+
+
+AC代码：
+
+#include <bits/stdc++.h>
+using namespace std;
+pair<string,int> s[205]; // 结构体 
+char ans[205];
+int n;
+bool cmp(const pair<string,int> & p1,const pair<string,int> & p2)
+{
+    return p1.first.size()<p2.first.size();
+}
+bool ispre(string S,string t)
+{
+    for(int i=0;i<t.size();i++)
+        if(S[i]!=t[i]) return false;
+    return true;
+}
+bool issuf(string S,string t)
+{
+    for(int i=t.size()-1;i>=0;i--)
+        if(S[S.size()-1-(t.size()-1-i)]!=t[i]) return false;
+    return true;
+}
+void solve(string S)
+{
+    for(int i=1;i<=n;i+=2)
+    {
+        if(ispre(S,s[i].first)&&issuf(S,s[i+1].first))
+        {
+            ans[s[i].second]='P';
+            ans[s[i+1].second]='S';
+            continue;
+        }
+        if(ispre(S,s[i+1].first)&&issuf(S,s[i].first))
+        {
+            ans[s[i].second]='S';
+            ans[s[i+1].second]='P';
+            continue;
+        }
+        return ;
+    }
+    for(int i=1;i<=n;i++)
+        cout<<ans[i];
+        cout<<endl;
+    exit(0); //使程序结束
+}
+int main()
+{
+    cin>>n;
+    n=n*2-2;
+    for(int i=1;i<=n;i++)
+    {
+        cin>>s[i].first;
+        s[i].second=i;
+    }
+    sort(s+1,s+1+n,cmp);
+    solve(s[1].first+s[n-1].first);
+    solve(s[1].first+s[n].first);
+    solve(s[2].first+s[n-1].first);
+    solve(s[2].first+s[n].first);
+    return 0;
+}
