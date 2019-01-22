@@ -1,0 +1,241 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int maxn = 1500 + 100;
+const int maxm = 1000050;
+const int INF = 0x3f3f3f3f;
+struct Dij{
+    struct Edge{
+        int to,next;
+        int w;
+    }edge[maxm << 1];
+    int n,m,tot;
+    int head[maxn];
+    bool vis[maxn];
+    void init(int N){
+        tot = 0;
+        this->n = N;
+        for(int i = 0; i <= N; ++i) head[i] = -1;
+    }
+    struct node{
+        int id;
+        int dis;
+        node(){};
+        node(int iid,int dd):id(iid),dis(dd){};
+        bool operator < (const node &d) const{
+            return dis > d.dis;
+        }
+    }d[maxn];
+    inline void addedge(int u,int v,int w){
+        edge[tot] = (Edge){v,head[u],w}, head[u] = tot++;
+    }
+    void dijkstra(int s,int t){
+        for(int i = 0; i <= n; ++i){
+            d[i].dis = INF, d[i].id = i, vis[i] = 0;
+        }
+        priority_queue<node>q;
+        d[s].dis = 0;
+        q.push(d[s]);
+        while(!q.empty()){
+            int u = q.top().id; q.pop();
+            if(vis[u]) continue ;
+            vis[u] = 1;
+            for(int i = head[u]; ~i; i = edge[i].next){
+                int v = edge[i].to;
+                if(vis[v]) continue ;
+                if(d[v].dis > d[u].dis + edge[i].w){
+                    d[v].dis = d[u].dis + edge[i].w;
+                    q.push(d[v]);
+                }
+            }
+        }
+        return ;
+    }
+}D;
+
+
+//最大流板子
+#define captype int
+struct SAP{
+    struct Edge{
+        int from,to,next;
+        captype cap;
+    }edge[maxm];
+    int tot,head[maxn];
+    int dis[maxn],cur[maxn],pre[maxn],gap[maxn];
+    void init(int n){
+        tot = 0;
+        //memset(head,-1,sizeof(head));
+        for(int i = 0; i <= n; ++i) head[i] = -1;
+    }
+    inline void addedge(int u,int v,captype c,captype rc = 0){
+        edge[tot] = (Edge){u,v,head[u],c}, head[u] = tot++;
+        edge[tot] = (Edge){v,u,head[v],rc}, head[v] = tot++;
+    }
+    captype max_flow(int s,int t,int n){ //包括源点和汇点在内的总点数
+        for(int i = 0; i < maxn; ++i){
+            gap[i] = dis[i] = 0;
+            cur[i] = head[i];
+        }
+        pre[s] = -1, gap[s] = n;
+        captype ans = 0;
+        int u = s;
+        while(dis[s] < n){
+            if(u == t){
+                captype minn = INF;
+                int v;
+                for(int i = pre[u]; ~i; i = pre[edge[i^1].to]){
+                    if(minn > edge[i].cap){
+                        minn = edge[i].cap, v = i;
+                    }
+                }
+                for(int i = pre[u]; ~i; i = pre[edge[i^1].to]){
+                    edge[i].cap -= minn;
+                    edge[i^1].cap += minn;
+                }
+                ans += minn;
+                u = edge[v^1].to;
+                continue ;
+            }
+            bool ok = 0;
+            int v;
+            for(int i = cur[u]; ~i; i = edge[i].next){
+                v = edge[i].to;
+                if(edge[i].cap > 0 && dis[u] == dis[v] + 1){
+                    ok = 1, cur[u] = pre[v] = i;
+                    break ;
+                }
+            }
+            if(ok){
+                u = v; continue ;
+            }
+            int mind = n;
+            for(int i = head[u]; ~i; i = edge[i].next){
+                if(edge[i].cap > 0 && mind > dis[edge[i].to]){
+                    mind = dis[edge[i].to];
+                    cur[u] = i;
+                }
+            }
+            --gap[dis[u]];
+            if(!gap[dis[u]]) return ans;
+            dis[u] = mind + 1;
+            ++gap[dis[u]];
+            if(u != s) u = edge[pre[u]^1].to;
+        }
+        return ans;
+    }
+}F;
+
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define typew int
+const int maxn = 1e6+100;
+struct Node{
+    int u,v,next;
+    typew w;
+    bool operator<(const Node &d)const{
+        return w < d.w;
+    }
+}edge[maxn<<1];
+int head[maxn],tot;
+int fa[maxn];
+
+void init(int n){
+    tot = 0;
+    for(int i=0;i<=n;++i){
+        fa[i] = i;
+        head[i] = -1;
+    }
+}
+
+inline void addedge(int u,int v,int w){
+    edge[tot].u = u;
+    edge[tot].v = v;
+    edge[tot].w = w;
+    edge[tot].next = head[u];
+    head[u] = tot++;
+}
+
+int Find(int x){
+    if(x == fa[x]){
+        return fa[x];
+    }
+    int y = Find(fa[x]);
+    return fa[x] = y;
+}
+
+int Union(int x,int y){
+    int a = Find(x), b = Find(y);
+    if(a==b) return 0;
+    fa[a] = b;
+    return 1;
+}
+
+void Kruskal(int n){
+    typew sum = 0;
+    int num = 0;
+    sort(edge,edge+tot);
+    for(int i = 0; i < tot; ++i){
+        int u = edge[i].u;
+        int v = edge[i].v;
+        typew w = edge[i].w;
+        if(Union(u,v)){
+            ++num;
+            sum += w;
+            if(num == n-1){
+                break;
+            }
+        }
+    }
+    printf("%d\n",sum);
+}
+
+#include<bits/stdc++.h>
+using namespace std;
+const int maxn = 1000+100;
+const int INF = 0x3f3f3f3f;
+struct Edge{
+    int to,next,w;
+}edge[maxn];
+int n,m;
+int head[maxn],tot;
+int ind[maxn]; //入度判断是否存在负权回路
+int d[maxn];
+bool vis[maxn];
+void init(){
+    tot = 0;
+    memset(head,-1,sizeof(head));
+}
+//前向星和邻接表判断重边都比较麻烦
+inline void addedge(int u,int v,int w){
+    edge[tot].to = v;
+    edge[tot].w = w;
+    edge[tot].next = head[u];
+    head[u] = tot++;
+}
+bool spfa(int x){
+   for(int i=0;i<=n;++i){
+        vis[i] = false;
+        d[i] = INF;
+        ind[i] = 0;
+   }
+   queue<int>q;
+   q.push(x);
+   vis[x] = 1,d[x]=0,ind[x]=0;
+   while(!q.empty()){
+        int u = q.front();q.pop();
+        vis[u] = 0;
+        for(int i=head[u];~i;i=edge[i].next){
+            int v = edge[i].to;
+            if(d[v]>d[u]+edge[i].w){
+                d[v] = d[u]+edge[i].w;
+                if(!vis[v]){
+                    q.push(v);
+                    vis[v] = 1;
+                    if(++ind[v]>n) return  false;//存在负权回路
+                }
+            }
+        }
+   }
+   return true;
+}
