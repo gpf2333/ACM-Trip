@@ -1,0 +1,120 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define lson rt<<1
+#define rson rt<<1|1
+#define Lson L,mid,lson
+#define Rson mid+1,R,rson
+typedef long long ll;
+const int maxn=1e5+10;
+int N,Q;
+ll sum[maxn*4];
+ll lazy[maxn*4];
+void pushup(int rt)
+{
+    sum[rt]=sum[lson]+sum[rson];
+}
+void pushdown(int rt,int len)
+{
+    if(lazy[rt])
+    {
+        lazy[lson]+=lazy[rt];
+        lazy[rson]+=lazy[rt];
+        sum[lson]+=lazy[rt]*(len-(len>>1));
+        sum[rson]+=lazy[rt]*(len>>1);
+        lazy[rt]=0;
+    }
+}
+void build(int L,int R,int rt)
+{
+    lazy[rt]=0;
+    if(L==R)
+    {
+        scanf("%lld",&sum[rt]);
+        return ;
+    }
+    int mid=(L+R)>>1;
+    build(Lson);
+    build(Rson);
+    pushup(rt);
+}
+void update(int l,int r,ll val,int L,int R,int rt)
+{
+    if(l<=L&&r>=R)
+    {
+        sum[rt]+=val*(R-L+1);
+        lazy[rt]+=val;
+        return ;
+    }
+    pushdown(rt,R-L+1);
+    int mid=(L+R)>>1;
+    if(l<=mid)
+        update(l,r,val,Lson);
+    if(r>mid)
+        update(l,r,val,Rson);
+    pushup(rt);
+}
+ll query(int l,int r,int L,int R,int rt)
+{
+    if(l<=L&&r>=R)
+    {
+        return sum[rt];
+    }
+    pushdown(rt,R-L+1);
+    int mid=(L+R)>>1;
+    ll res=0;
+    if(l<=mid)
+        res+=query(l,r,Lson);
+    if(r>mid)
+        res+=query(l,r,Rson);
+    return res;
+}
+int k;
+
+char op[10];
+int main()
+{
+    int T;
+    scanf("%d",&T);
+    while(T--)
+    {
+        printf("Case %d:\n",++k);
+        int N;
+        scanf("%d",&N);
+        build(1,N,1);
+        while(~scanf("%s",&op))
+        {
+            if(op[0]=='Q')
+            {
+                int l,r;
+               scanf("%d%d",&l,&r);
+               printf("%lld\n",query(l,r,1,N,1));
+            }
+            else if(op[0]=='A')
+            {
+                int l;
+               ll x;
+               scanf("%d%lld",&l,&x);
+               update(l,l,x,1,N,1);
+            }
+            else if(op[0]=='S')
+            {
+                int l;
+               ll x;
+               scanf("%d%lld",&l,&x);
+               update(l,l,-x,1,N,1);
+            }
+            else if(op[0]=='E')
+            {
+                break;
+            }
+
+
+
+
+       }
+   }
+
+
+
+    return 0;
+}
