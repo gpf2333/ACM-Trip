@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define lson rt<<1
+#define rson rt<<1|1
+#define Lson L,mid,lson
+#define Rson mid+1,R,rson
+typedef long long ll;
+const int maxn=5*1e4+10;
+const int inf=0x3f3f3f3f;
+int N,Q;
+struct node
+{
+    int maxx;
+    int minn;
+} tree[maxn<<2];
+void pushup(int rt)
+{
+    tree[rt].maxx=max(tree[lson].maxx,tree[rson].maxx);
+    tree[rt].minn=min(tree[lson].minn,tree[rson].minn);
+}
+void build(int L,int R,int rt)
+{
+    if(L==R)
+    {
+        tree[rt].maxx=0;
+        tree[rt].minn=N+1;
+        return ;
+    }
+    int mid=(L+R)>>1;
+    build(Lson);
+    build(Rson);
+    pushup(rt);
+}
+void update(int t,bool val,int L,int R,int rt)
+{
+    if(L==R)
+    {
+        if(val)// 拆毁
+        {
+            tree[rt].maxx=t;
+            tree[rt].minn=t;
+        }
+        else // 重建
+        {
+            tree[rt].maxx=0;
+            tree[rt].minn=N+1;
+        }
+        return ;
+    }
+    int mid=(L+R)>>1;
+    if(t<=mid)
+        update(t,val,Lson);
+    if(t>mid)
+        update(t,val,Rson);
+    pushup(rt);
+
+}
+int query_max(int s,int e,int L,int R,int rt)
+{
+    if(s<=L && e>=R)
+    {
+        return tree[rt].maxx;
+
+    }
+    int mid=(L+R)>>1;
+    int res=0;
+    if(s<=mid)
+        res=max(res,query_max(s,e,Lson));
+    if(e>mid)
+        res=max(res,query_max(s,e,Rson));
+    return res;
+
+}
+int query_min(int s,int e,int L,int R,int rt)
+{
+    if(s<=L && e>=R)
+    {
+        return tree[rt].minn;
+
+    }
+    int mid=(L+R)>>1;
+    int res=inf;
+    if(s<=mid)
+        res=min(res,query_min(s,e,Lson));
+    if(e>mid)
+        res=min(res,query_min(s,e,Rson));
+    return res;
+
+}
+char op[10];
+int ds[maxn];
+int main()
+{
+    while(~scanf("%d%d",&N,&Q))
+    {
+        memset(tree,0,sizeof(tree));
+        memset(ds,0,sizeof(ds));
+        build(1,N,1);
+        int cnt=0;
+        while(Q--)
+        {
+            scanf("%s",op);
+            if(op[0]=='D')
+            {
+                int t;
+                scanf("%d",&t);
+                ds[++cnt]=t;
+                update(t,true,1,N,1);
+
+            }
+            else if(op[0]=='Q')
+            {
+                int t;
+                scanf("%d",&t);
+                int qmax=query_max(1,t,1,N,1);
+                int qmin=query_min(t,N,1,N,1);
+                if(qmax==qmin)
+                    cout<<0<<endl;
+                else
+                    cout<<qmin-qmax-1<<endl;
+            }
+            else if(op[0]=='R')
+            {
+                update(ds[cnt--],false,1,N,1);
+            }
+
+        }
+    }
+}
