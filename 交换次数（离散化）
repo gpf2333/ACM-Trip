@@ -1,0 +1,254 @@
+链接：https://ac.nowcoder.com/acm/contest/551/H
+来源：牛客网
+
+众所周知 CSL 不仅玩魔方很强，打麻将也很强。今天他打魔法麻将的时候，在路上撞到了一个被打乱的 n 维魔法拼图。每一块拼图的位置用一个 n 维的坐标 (p1,p2,…,pn)
+来表示。将拼图的任意两块交换位置称为一步。CSL 赶着打魔法麻将时间很紧，对步数和时间也很严格，所以需要用恰好 t 步把拼图复原。请问他能做到吗？
+输入描述:
+
+第一行有一个整数 n，表示拼图的维数。
+
+第二行有 n 个整数 d1,d2,…,dn
+
+，分别表示每一维的大小。
+
+下面 2×∏ni=1di
+行，每行有 n 个整数：第 2⋅i−1 行表示 第 i 块拼图的初始位置 (ai,1,ai,2,…,ai,n)，第 2⋅i 行表示第 i 块拼图的目标位置 (bi,1,bi,2,…,bi,n)
+，保证不会有多个拼图在同一初始位置或目标位置。
+
+最后一行有一个整数 t，表示 CSL 要求的步数。
+
+1≤n≤10
+
+n∏i=1di≤106
+1≤ai,j,bi,j≤dj
+0≤t≤2⋅106
+
+
+输出描述:
+
+如果 CSL 可以用恰好 t 步复原，在一行输出 "YES"，否则输出 "NO"。
+
+示例1
+输入
+复制
+
+1
+1
+1
+1
+1
+
+输出
+复制
+
+NO
+
+示例2
+输入
+复制
+
+2
+2 2
+1 2
+2 1
+1 1
+2 2
+2 1
+1 2
+2 2
+1 1
+2
+
+输出
+复制
+
+YES
+
+AC代码:
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn=1e6+10;
+int d[15];
+int a[maxn][15];
+int b[maxn][15];
+int a1[maxn];
+int b1[maxn];
+int a2[maxn];
+int b2[maxn];
+int t[15];
+int vis[maxn];
+int main()
+{
+    int n;
+    cin>>n;
+    int p=1;
+    for(int i=1;i<=n;i++)
+    {
+        cin>>d[i];
+        p*=d[i];
+    }
+    t[n+1]=1;
+    for(int i=n;i>=1;i--)
+    {
+        t[i]=t[i+1]*d[i];
+        //cout<<t[i]<<endl;
+    }
+    for(int i=1;i<=p;i++)
+    {
+        for(int j=1;j<=n;j++)
+        {
+            cin>>a[i][j];
+
+        }
+        for(int j=1;j<=n;j++)
+        {
+            cin>>b[i][j];
+        }
+    }
+
+    memset(a1,0,sizeof(a1));
+    memset(b1,0,sizeof(b1));
+    for(int i=1;i<=p;i++)
+    {
+        for(int j=1;j<=n;j++)
+        {
+            a1[i]+=(a[i][j]-1)*t[j+1];
+
+            b1[i]+=(b[i][j]-1)*t[j+1];
+
+        }
+        a2[i]=a1[i];
+        b2[i]=b1[i];
+        //cout<<"i:"<<i<<" "<<a1[i]<<" "<<a2[i]<<" "<<b1[i]<<" "<<b2[i]<<endl;
+
+    }
+
+    sort(a1+1,a1+1+p);
+    sort(b1+1,b1+1+p);
+    for(int i=1;i<=p;i++)
+    {
+        a2[i]=lower_bound(a1+1,a1+1+p,a2[i])-a1;// 在升序序列中的位置
+        vis[a2[i]]=i;// vis[i] 表示 升序序列中值为i的在原序列中的位置
+        b2[i]=lower_bound(b1+1,b1+1+p,b2[i])-b1;// 在升序序列中的位置
+    }
+
+    int ans=0;
+    for(int i=1;i<=p;i++)
+    {
+        if(a2[i]!=b2[i])
+        {
+            int tempp=a2[i];
+            swap(a2[i],a2[vis[b2[i]]]);
+            swap(vis[tempp],vis[b2[i]]);
+            ans++;
+        }
+    }
+    int t;
+    cin>>t;
+    //cout<<ans<<endl;
+    if(ans==t || (t>= ans && (t-ans) % 2==0))
+        cout<<"YES"<<endl;
+    else
+        cout<<"NO"<<endl;
+
+}
+
+
+
+链接：https://ac.nowcoder.com/acm/contest/551/E
+来源：牛客网
+
+有两个长度为 n 的序列，a0,a1,…,an−1和 b0,b1,…,bn−1。CSL 有一种魔法，每执行一次魔法，可以任意挑选一个序列并任意交换序列中两个元素的位置。
+CSL 使用若干次魔法，得到最终的序列 a 和 b，并且想要让 a0b0+a1b1+…+an−1bn−1的值最小化。求解 CSL 至少使用多少次魔法，能够达到最小化的目标。
+输入描述:
+
+第一行有一个整数 n，表示序列的长度。
+
+接下来两行，每行有 n 个整数，分别表示初始序列 a 和 b。
+
+输入数据保证每个序列里的数两两不同。
+
+2≤n≤105
+
+
+1≤ai,bi≤109
+
+
+输出描述:
+
+在一行输出一个整数，表示最少使用的魔法次数。
+
+示例1
+输入
+复制
+
+2
+1 2
+1 2
+
+输出
+复制
+
+1
+
+示例2
+输入
+复制
+
+2
+1 2
+2 1
+
+输出
+复制
+
+0
+
+AC代码:
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn=1e5+10;
+int a[maxn],b[maxn],c[maxn],d[maxn];
+int vis[maxn];
+int main()
+{
+    int n;
+    cin>>n;
+    for(int i=1;i<=n;i++)
+    {
+        scanf("%d",&a[i]);
+        b[i]=a[i];
+    }
+    for(int i=1;i<=n;i++)
+    {
+        scanf("%d",&c[i]);
+        d[i]=c[i];
+    }
+    sort(a+1,a+1+n);
+    for(int i=1;i<=n;i++)
+    {
+        b[i]=lower_bound(a+1,a+1+n,b[i])-a; // 离散化/现位置
+        vis[b[i]]=i;// 原位置
+    }
+    sort(c+1,c+1+n);
+    for(int i=1;i<=n;i++)
+    {
+        d[i]=lower_bound(c+1,c+1+n,d[i])-c;
+    }
+
+    int ans=0;
+    for(int i=1;i<=n;i++)
+    {
+        if(b[i]+d[i]!=n+1)
+        {
+         
+            int temp=b[i];
+            swap(b[i],b[vis[n+1-d[i]]]);
+            swap(vis[temp],vis[n+1-d[i]]);
+            ans++;
+        }
+    }
+    cout<<ans<<endl;
+
+
+}
