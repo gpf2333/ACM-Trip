@@ -1,0 +1,87 @@
+链接：https://ac.nowcoder.com/acm/contest/551/D
+来源：牛客网
+
+题目描述
+CSL 以前不会字符串算法，经过一年的训练，他还是不会……于是他打算向你求助。
+
+给定一个字符串，只含有可打印字符，通过删除若干字符得到新字符串，新字符串必须满足两个条件：
+
+    原字符串中出现的字符，新字符串也必须包含。
+    新字符串中所有的字符均不相同。
+    新字符串的字典序是满足上面两个条件的最小的字符串。
+
+
+输入描述:
+
+仅一行，有一个只含有可打印字符的字符串 s。
+
+|s|≤105
+
+
+输出描述:
+
+在一行输出字典序最小的新字符串。
+
+示例1
+输入
+复制
+
+bab
+
+输出
+复制
+
+ab
+
+示例2
+输入
+复制
+
+baca
+
+输出
+复制
+
+bac
+
+备注:
+
+ASCII字符集包含 94 个可打印字符(0x21 - 0x7E)，不包含空格。
+
+
+AC代码:
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn=1e5+10;
+char pos[150];
+int cnt[150];
+char str[maxn];
+bool vis[maxn];
+int main()
+{
+    cin>>str;
+    memset(cnt,0,sizeof(cnt));
+    memset(vis,0,sizeof(vis));
+    int cntt=0;
+    for(int i=0;str[i];i++)
+    {
+        cnt[str[i]]++;
+    }
+    int cur=0;
+    for(int i=0;str[i];i++)
+    {
+        cnt[str[i]]--;
+        if(vis[str[i]]) continue;
+        while(cur>0 && cnt[pos[cur]]>0 && str[i]<pos[cur]) // 若有比当前字典序低的字符 优先考虑字典序低的字符
+        {
+            vis[pos[cur]]=false;
+            cur--;
+
+        }
+        pos[++cur]=str[i];
+        vis[str[i]]=true;
+    }
+    for(int i=1;i<=cur;i++)
+        cout<<pos[i];
+    cout<<endl;
+}
