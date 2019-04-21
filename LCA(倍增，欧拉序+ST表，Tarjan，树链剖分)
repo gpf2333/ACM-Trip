@@ -1,0 +1,198 @@
+平常在信息学竞赛中求LCA一般有四种办法：
+
+    用倍增法求解，预处理复杂度是 O(nlogn),每次询问的复杂度是 O(logn), 属于在线解法。
+
+    利用欧拉序转化为RMQ问题，用ST表求解RMQ问题，预处理复杂度 O(n+nlogn)，每次询问的复杂度为 O(1)， 也是在线算法。  
+
+    采用Tarjan算法求解，复杂度 O(α(n)+Q)，属于离线算法。
+
+    利用树链剖分求解，复杂度预处理O(n)，单次查询 O(logn)，属于在线算法。
+    但是树链剖分求解LCA中的行为（强调是行为，不是思想）与倍增法类似，加之代码量大（当然你有板子的话当我没说过），不易调试，
+    所以仅在讲倍增法的时候有所涉及，不详细展开。
+    
+
+
+
+1）倍增法
+     代码：
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN=1e5+10;
+struct edgetype {
+    int to, next, dist;
+} edge[MAXN << 1];
+int head[MAXN], cnt;
+inline void AddEdge(int from, int to, int dist) {
+    edge[++cnt] = (edgetype){to, head[from], dist};
+    head[from] = cnt;
+}
+namespace LCA {
+    int anc[MAXN][LOG], depth[MAXN];
+    int dist[MAXN];
+    inline void dfs(int u, int p, int d) {
+        anc[u][0] = p; depth[u] = d;
+        for (int i = head[u]; i; i = edge[i].next) {
+            int v = edge[i].to;
+            if (v == p) continue;
+            dist[v] = dist[u] + edge[i].dist;
+            dfs(v, u, d + 1);
+        }
+    }
+    inline void init(int root, int n) {
+        dist[root] = 0;
+        dfs(root, 0, 1);
+        for (int j = 1; j < LOG; j++)  //递推anc数组
+            for (int i = 1; i <= n; i++)
+                anc[i][j] = anc[ anc[i][j - 1] ][j - 1];
+    }
+    inline void swim(int& x, int h) { //将x上爬h个单位
+        for (int i = 0; h > 0; i++) {
+            if (h & 1) 
+                x = anc[x][i];
+            h >>= 1;
+        }
+    }
+    inline int query(int x, int y) {
+        if (depth[x] < depth[y]) std::swap(x, y); //置x为深度较深的点
+        swim(x, depth[x] - depth[y]); //让x和y的深度相同
+        if (x == y) return x;  //如果相等直接返回
+        for (int i = LOG - 1; i >= 0; i--) //从高位开始枚举每个二进制位
+            if (anc[x][i] != anc[y][i]) {
+                x = anc[x][i];
+                y = anc[y][i];
+            } 
+        return anc[x][0];
+    }
+}
+
+
+2)欧拉序+RMQ（st表） 求解
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN=1e5+10;
+struct edgetype {
+    int to, next, dist;
+} edge[MAXN << 1];
+int head[MAXN], cnt;
+inline void AddEdge(int from, int to, int dist) {
+    edge[++cnt] = (edgetype){to, head[from], dist};
+    head[from] = cnt;
+}
+namespace LCA {
+    int ST[MAXN << 1][LOG];
+    int value[MAXN << 1], depth[MAXN << 1], first[MAXN], len; //欧拉序（value）及深度序列相关
+    int dist[MAXN];
+    inline int calc(int x, int y) { //利用下标进行运算
+        return depth[x] < depth[y] ? x : y;
+    }
+    inline void dfs(int u, int p, int d) {
+        value[++len] = u; depth[len] = d; first[u] = len; //递归时将结点加入欧拉序列中，并记录first
+        for (int i = head[u]; i; i = edge[i].next) {
+            int v = edge[i].to;
+            if (v == p) continue;
+            dist[v] = dist[u] + edge[i].dist;
+            dfs(v, u, d + 1);
+            value[++len] = u; depth[len] = d; //回溯时将结点加入欧拉序列中
+        }
+    }
+    inline void init(int root) {
+        len = 0; dist[root] = 0;
+        dfs(root, 0, 1);
+        for (int i = 1; i <= len; i++) ST[i][0] = i;
+        for (int j = 1; (1 << j) <= len; j++)  //ST表倍增过程
+            for (int i = 1; i + (1 << j) - 1 <= len; i++) 
+                ST[i][j] = calc(ST[i][j - 1], ST[i + (1 << (j - 1))][j - 1]);
+    }
+    inline int query(int x, int y) {
+        int l = first[x], r = first[y]; 
+        if (l > r) std::swap(l, r); //找到区间[l, r]
+        int k = log2(r - l + 1);
+        return value[calc(ST[l][k], ST[r - (1 << k) + 1][k])];
+    }
+}
+
+namespace LCA {
+    edgetype qedge[MAXQ << 1];
+    int qhead[MAXN], qcnt;
+    inline void AddQuery(int from, int to, int index) { //添加询问的前向星
+        qedge[++qcnt] = (edgetype){to, qhead[from], index};
+        qhead[from] = qcnt;
+    }
+    int u[MAXN], v[MAXN], ans[MAXN]; //询问相关
+    int f[MAXN], dist[MAXN];  
+    bool visit[MAXN]; 
+    inline int seek(int u) {  // 路径压缩
+        return f[u] == u ? u : f[u] = seek(f[u]);
+    }
+    inline void dfs(int u, int p) {   //Tarjan算法的主要流程
+        for (int i = head[u]; i; i = edge[i].next) {  
+            int v = edge[i].to;
+            if (v == p) continue;
+            dist[v] = dist[u] + edge[i].dist;
+            dfs(v, u); 
+            f[v] = u; //回溯时修改 f 数组
+        }
+        visit[u] = true; //表示已访问
+        for (int i = qhead[u]; i; i = qedge[i].next) {
+            int v = qedge[i].to;
+            if (visit[v]) //如果另一个顶点也被访问过则处理询问
+                ans[qedge[i].dist] = seek(v);
+        }
+    }
+    inline void init() {
+        memset(qhead, 0, sizeof qhead); qcnt = 0;
+    }
+    inline void solve(int root, int n) {
+        dist[root] = 0;
+        memset(visit, false, sizeof visit);
+        for (int i = 1; i <= n; i++) f[i] = i; //并查集初始化
+        dfs(root, 0);
+    }
+}
+
+4）树链剖分
+
+int father[MAXN], depth[MAXN], size[MAXN], dist[MAXN]; //树剖部分
+int son[MAXN], top[MAXN];
+bool visit[MAXN];
+void dfs1(int u, int p, int d) {
+    father[u] = p, depth[u] = d, size[u] = 1, son[u] = 0, visit[u] = true;
+    int maxsize = 0;
+    for (int i = head[u]; i; i = edge[i].next) {
+        int v = edge[i].to;
+         if (v == p || visit[v]) continue;
+        dist[v] = dist[u] + edge[i].dist;
+        dfs1(v, u, d + 1);
+        size[u] += size[v];
+        if (size[v] > maxsize) {
+            maxsize = size[v];
+            son[u] = v;
+        }
+    }
+}
+void dfs2(int u, int anc) {
+    top[u] = anc, visit[u] = true;
+    if (son[u]) dfs2(son[u], anc);
+    for (int i = head[u]; i; i = edge[i].next) {
+        int v = edge[i].to;
+        if (v == father[u] || v == son[u] || visit[v]) continue;
+        dfs2(v, v);
+    }
+}
+namespace LCA {
+    void init(int root) {
+        dist[root] = 0;
+        memset(visit, false, sizeof visit);
+        dfs1(root, 0, 1);
+        memset(visit, false, sizeof visit);
+        dfs2(root, root);
+    }
+    long long query(int x, int y) {
+        while (top[x] != top[y]) { //如果不在同一条重链上
+            if (depth[top[x]] < depth[top[y]]) std::swap(x, y); //让x成为链顶深度较浅的结点
+            x = father[top[x]]; //x上跳
+        }
+        if (depth[x] > depth[y]) std::swap(x, y);
+        return x; //在同一条重链上时，深度浅的就是解
+    }
+}
