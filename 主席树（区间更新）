@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 1e5+10;
+int n,m;
+struct node{
+    int l,r;
+    ll sum,lazy;
+}T[mx<<6];
+int id[mx];
+int cnt;
+void push_up(int rt){
+    T[rt].sum = T[T[rt].l].sum+T[T[rt].r].sum;
+}
+void built(int &rt,int l,int r){
+    rt = cnt++;
+    T[rt].lazy = 0;
+    if(l==r){
+        scanf("%lld",&T[rt].sum);
+        return;
+    }
+    int mid = l+r>>1;
+    built(T[rt].l,l,mid);
+    built(T[rt].r,mid+1,r);
+    push_up(rt);
+}
+void update(int pre,int &rt,int L,int R,int l,int r,int c){
+    rt = cnt++;
+    T[rt] = T[pre];
+    T[rt].sum += 1ll*(r-l+1)*c;
+    if(L>=l&&R<=r){
+        T[rt].lazy += c;
+        return;
+    }
+    int mid = L+R>>1;
+    if(l>mid)    update(T[pre].r,T[rt].r,mid+1,R,l,r,c);
+    else if(r<=mid)    update(T[pre].l,T[rt].l,L,mid,l,r,c);
+    else{
+        update(T[pre].l,T[rt].l,L,mid,l,mid,c);
+        update(T[pre].r,T[rt].r,mid+1,R,mid+1,r,c);
+    }
+}
+ll query(int rt,int L,int R,int l,int r,ll x){
+    if(L>=l&&R<=r){
+        return T[rt].sum+1ll*(R-L+1)*x;    
+    }
+    int mid = L+R>>1;
+    if(l>mid) return query(T[rt].r,mid+1,R,l,r,x+T[rt].lazy);
+    else if(r<=mid)    return query(T[rt].l,L,mid,l,r,x+T[rt].lazy);
+    else    return query(T[rt].l,L,mid,l,mid,x+T[rt].lazy)+query(T[rt].r,mid+1,R,mid+1,r,x+T[rt].lazy);
+}
+int main(){
+    //freopen("test.in","r",stdin);
+    //freopen("test.out","w",stdout);
+    int t,q,ca = 1;
+    while(scanf("%d%d",&n,&m)!=EOF){
+        cnt = 1;
+        q = 0;
+        built(id[0],1,n);
+        while(m--){
+            char op[10];
+            int l,r,d;
+            scanf("%s",op);
+            if(op[0]=='Q'){
+                scanf("%d%d",&l,&r);
+                printf("%lld\n",query(id[q],1,n,l,r,0));
+            }
+            else if(op[0]=='H'){
+                scanf("%d%d%d",&l,&r,&d);
+                printf("%lld\n",query(id[d],1,n,l,r,0));
+            }
+            else if(op[0]=='B'){
+                scanf("%d",&d);
+                q=d;
+            }
+            else{
+                scanf("%d%d%d",&l,&r,&d);
+                q++;
+                update(id[q-1],id[q],1,n,l,r,d);
+            }
+        }
+    }
+    return 0;
+}
