@@ -1,0 +1,146 @@
+莫比乌斯函数详解及其性质：https://www.cnblogs.com/qdscwyy/p/8012843.html
+
+求莫比乌斯函数：
+const int maxn = 1e5;
+bool check[maxn];
+int prime[maxn];
+int mu[maxn];
+int num[2*maxn];
+ll F[maxn];
+void Moblus()
+{
+    memset(check,0,sizeof(check));
+    mu[1]=1;
+    int tot=0;
+    for(int i=2;i<=maxn;i++)
+    {
+        if(!check[i]){
+            prime[tot++]=i;
+            mu[i]=-1;
+        }
+        for(int j=0;j<tot;j++)
+        {
+            if(i*prime[j]>maxn) break;
+            check[i*prime[j]]=true;
+            if(i%prime[j]==0){
+                mu[i*prime[j]]=0;
+                break;
+            }
+            else{
+                mu[i*prime[j]]= -mu[i];
+            }
+        }
+    }
+}
+
+
+HDU 6053 Trickgcd 
+
+题意：
+给出一个数组a  满足  1<=ai<=1e5 
+根据a数组构造b数组满足条件 当且仅当  1<=bi<=ai ，gcd(b1,b2....,bn)>=2
+求b数组不同构造的个数
+
+解题思路：
+我们令f(x) 为gcd为x的所有可能数
+那么答案就是 ∏ai - f(1)
+同时又有 F（x）= Σd|x f(x) = ∏floor(ai/x)
+我们可以枚举 floor（）的值 只需统计每个值下有多少个ai就可以将复杂度从o（n^2）降到 o（nlogn）
+
+AC代码：
+
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int mod=1e9+7;
+const int maxn=1e5+10;
+bool check[maxn];
+int prime[maxn];
+int mu[maxn];
+int num[2*maxn];
+ll F[maxn];
+void Moblus()//ÇóÄª±ÈÎÚË¹º¯Êý
+{
+    memset(check,0,sizeof(check));
+    mu[1]=1;
+    int tot=0;
+    for(int i=2;i<=maxn;i++)
+    {
+        if(!check[i]){
+            prime[tot++]=i;
+            mu[i]=-1;
+        }
+        for(int j=0;j<tot;j++)
+        {
+            if(i*prime[j]>maxn) break;
+            check[i*prime[j]]=true;
+            if(i%prime[j]==0){
+                mu[i*prime[j]]=0;
+                break;
+            }
+            else{
+                mu[i*prime[j]]= -mu[i];
+            }
+        }
+    }
+}
+ll quickpow(ll a,int b)
+{
+    ll ans=1;
+    while(b)
+    {
+        if(b&1) ans=ans*a%mod;
+        a=a*a%mod;
+        b>>=1;
+    }
+    return ans%mod;
+}
+int main()
+{
+    //cin.tie(NULL);
+    //ios::sync_with_stdio(0);
+    int t;
+    int cas=0;
+    scanf("%d",&t);
+    Moblus();
+    while(t--)
+    {
+        int n;
+        scanf("%d",&n);
+        memset(num,0,sizeof(num));
+        memset(F,0,sizeof(F));
+        int gcd_max=1e9;
+        int a_max=0;
+        ll ans=0;
+        for(int i=1;i<=n;i++)
+        {
+            int tmp;
+            scanf("%d",&tmp);
+            num[tmp]++;
+            //ans = ans*(tmp)%mod;
+            gcd_max=min(gcd_max,tmp);
+            a_max=max(a_max,tmp);
+        }
+        //ll cnt=0;
+        for(int i=1;i<2*maxn;i++)
+        {
+            num[i]+=num[i-1];
+        }
+        //cout<<gcd_max<<" "<<a_max<<endl;
+        for(int i=2;i<=gcd_max;i++)
+        {
+            F[i]=1;
+            for(int j=i;j<=a_max;j+=i)
+            {
+                F[i]= F[i]*quickpow((ll)(j/i),num[i+j-1]-num[j-1])%mod;
+            }
+            ans=(ans-mu[i]*F[i]+mod)%mod;
+            //cout<<ans<<endl;
+        }
+        //cout<<ans<<" "<<cnt<<endl;
+        printf("Case #%d: %lld\n",++cas,ans);
+
+
+    }
+}
+
