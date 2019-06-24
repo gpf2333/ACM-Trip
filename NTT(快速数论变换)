@@ -1,0 +1,135 @@
+
+
+
+
+HDU 6061:http://acm.hdu.edu.cn/showproblem.php?pid=6061
+AC代码：
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int maxn = 1e5 + 100;
+const int mod = 998244353;
+
+const int G = 3;
+int wn[30];
+
+ll Pow(ll a, ll b, const ll mod){
+    ll res = 1;
+    a %= mod;
+    while(b > 0){
+        if(b & 1) res = res * a % mod;
+        a = a * a % mod;
+        b >>= 1;
+    }
+    return res;
+}
+
+void getwn(){
+    for(int i = 0; i < 25; ++i){
+        wn[i] = Pow(G, (mod - 1) / (1 << i), mod);
+    }
+}
+
+void change(int y[], int len){
+    for(int i = 1, j = len / 2; i < len - 1; ++i){
+        if(i < j) swap(y[i], y[j]);
+        int k = len >> 1;
+        while(j >= k){
+            j -=k,
+            k >>= 1;
+        }
+        if(j < k) j += k;
+    }
+}
+
+void NTT(int y[], int len, int on){
+    change(y, len);
+    for(int h = 2, id = 1; h <= len; h <<= 1, ++id){
+        for(int j = 0; j < len; j += h){
+            int w = 1;
+            for(int k = j; k < j + h / 2; ++k){
+                int u = y[k] % mod;
+                int t = (ll)w * y[k + h / 2] % mod;
+                y[k] = (u + t) % mod;
+                y[k + h / 2] = ((u - t) % mod + mod) % mod;
+                w = (ll)w * wn[id] % mod;
+            }
+        }
+    }
+    if(on == -1){
+        ll inv = Pow(len, mod - 2, mod);
+        for(int i = 1; i < len / 2; ++i){
+            swap(y[i], y[len - i]);
+        }
+        for(int i = 0; i < len; ++i){
+            y[i] = (ll)y[i] * inv % mod;
+        }
+    }
+}
+
+int fac[maxn], inv[maxn], invf[maxn];
+void init(){
+    fac[0] = fac[1] = inv[0] = inv[1] = invf[0] = invf[1] = 1;
+    for(int i = 2; i < maxn; ++i){
+        fac[i] = (ll)fac[i - 1] * i % mod;
+        inv[i] = (ll)(mod - mod / i) * (ll)inv[mod % i] % mod;
+        invf[i] = (ll)invf[i - 1] * (ll)inv[i] % mod;
+    }
+}
+
+inline ll C(int n, int m){
+    if(m > n) return 0;
+    return ((ll)fac[n] * (ll)invf[n - m] % mod) *(ll)invf[m] % mod;
+}
+
+int a[maxn << 2], b[maxn << 2], c[maxn << 2];
+
+int main(){
+    getwn();
+    init();
+    int n;
+    while(~scanf("%d", &n)){
+        for(int i = 0; i <= n; ++i){
+            scanf("%d",&c[i]);
+        }
+        int sum = 0;
+        int m, x;
+        scanf("%d",&m);
+        for(int i = 0; i < m; ++i){
+            scanf("%d",&x);
+            sum = (sum + x) % mod;
+        }
+        sum = (-sum + mod) % mod;
+        if(sum == 0){
+            for(int i = 0; i <= n; ++i){
+                printf("%d ", c[i]);
+            }
+            puts("");
+            continue ;
+        }
+        int len = 1;
+        while(len <= (n<< 1)) len <<= 1;
+        int tmp = 1;
+        for(int i = 0; i <= len; ++i){
+            if(i <= n){
+                a[i] = (ll)c[n - i] * fac[n - i] % mod;
+                b[i] = (ll)tmp * invf[i] % mod;
+                tmp = ((ll)tmp * sum) % mod;
+            } else {
+                a[i] = b[i] = 0;
+            }
+        }
+        NTT(a, len, 1);
+        NTT(b, len, 1);
+        for(int i = 0; i <= len; ++i){
+            a[i] = (ll)a[i] * b[i] % mod;
+        }
+        NTT(a, len, -1);
+        for(int i = 0; i <= n; ++i){
+            tmp = (ll)a[n - i] * invf[i] % mod;
+            printf("%d ", tmp);
+        }
+        puts("");
+    }
+    return 0;
+}
