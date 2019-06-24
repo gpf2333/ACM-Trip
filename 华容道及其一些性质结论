@@ -1,0 +1,49 @@
+结论一：相邻的两个数字块交换位置改变序列逆序对数量的奇偶性。
+
+结论二：白块左右移动不会改变逆序对的数量。
+
+结论三：白块上下移动最终不会改变逆序对数量的奇偶性。因为白块每向上或向下移动一位相当于对应的数字块向下或向上移动m−1次，而白块一定是从右下角最终回到右下角，
+移动偶数次，数字块也移动偶数次，不会改变逆序对数量的奇偶性。
+
+结论四：两种局面相互可以达到当且仅当两种局面的逆序对奇偶性相同
+
+HDU 6048:
+http://acm.hdu.edu.cn/showproblem.php?pid=6048
+
+
+解题思路：
+虽说应该求逆序对，按题意构造矩阵，但是会tttttttttttttt飞，所以，这题实际上是找规律
+求逆序对时，可以累加每个数字后面比它小的数字的个数，即累加每个数字对逆序对的贡献。设当前轮剩余的数字数量为tot，则这一轮可
+以取到的数字个数为(tot−1)/p+1，其中除第一个数不贡献逆序对数之外，其余的num=(tot−1)/p个数每个数贡献的逆序对数量构成首项为
+p−1，公差为p−1的等差数列，求和化简后的公式为num∗(num+1)/2∗(p−1)。
+
+
+AC代码：
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+const int INF = 0x3f3f3f3f;
+const int N = 1e3 + 10;
+
+int main()
+{
+    int T;
+    scanf("%d", &T);
+    while (T--)
+    {
+        int n, m, p;
+        scanf("%d%d%d", &n, &m, &p);
+        int tot = n * m - 1;
+        ll ans = 0;
+        while (tot)
+        {
+            int num = (tot - 1) / p;
+            ans += num * (num + 1) / 2 * (p - 1);
+            tot -= num + 1;
+        }
+        printf("%s\n", ans & 1 ? "NO" : "YES");
+    }
+    return 0;
+}
