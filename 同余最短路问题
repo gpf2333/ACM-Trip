@@ -1,0 +1,83 @@
+HDU 6071
+题解： 题目要求是只有四个点，然后连边成正方形，问从2号点出发，再回到2号点且走过的总距离大于K的最短的路径是多少。
+对于这个，我们考虑如果存在一条合法路径，那么我再走2*w也一定是合法路径，其中w表示与2相连的某条边的长度。
+即回到2之后再出去再回来，这样的路径一定合法。那么，如果走了某条路径回到了2，然后总距离不够的话，我们只需要加上几个2*w使得最后结果大于等于K即可。
+
+那么如何使这个结果最小呢？我们考虑设置一个数组d[x][p]表示从2出发最后到达x点且费用对2*w取模结果为p时的最小花费。
+这样子原本的一个点就可以拆成2*w个点，这样跑一遍dijkstra即可求出d数组。之后，对于每一个对2*w取模后的数值，
+我们都可以计算把它补到大于K且距离K最近的花费，再在这些花费中取一个最小的即可。那么，这样子考虑为什么可以包含全部的而且最优的解呢？
+因为我们最后补的是2*w或者它的倍数，然后我把对2*w取模后的所有取值的最小花费都计算了一次，这样子得出来的最小花费一定包含所有的情况，
+即2*w的所有剩余系都被包括了，所以可以保证正确性。具体代码如下
+
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int maxn = 30000+10;
+struct Edge{
+    ll w;
+    int x;
+};
+vector<Edge> g[4];
+ll dis[4][maxn*2];
+void dijsktra(int ww)
+{
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>> > q;
+    q.push(make_pair(0LL,1));
+    for(int i=0;i<4;i++){
+        for(int j=0;j<=ww;j++){
+            dis[i][j] = 2e18;
+        }
+    }
+    while(!q.empty()){
+        ll w = q.top().first;
+        int u = q.top().second;
+        q.pop();
+        if(w>dis[u][w%ww]) continue;
+        for(int v=0;v<g[u].size();v++){
+            int to = g[u][v].x;
+            ll W = g[u][v].w;
+            if(w+W<dis[to][(w+W)%ww]){
+                dis[to][(w+W)%ww] = w+W;
+                q.push(make_pair(w+W,to));
+            }
+
+        }
+    }
+}
+int main()
+{
+    cin.tie(NULL);
+    ios::sync_with_stdio(0);
+    int t;
+    cin>>t;
+    while(t--)
+    {
+        ll k;
+        int d[4];
+        cin>>k;
+        for(int i=0;i<4;i++)
+        {
+            cin>>d[i];
+        }
+        memset(g,0,sizeof(g));
+        g[0].push_back(Edge{d[0],1});
+        g[0].push_back(Edge{d[3],3});
+        g[1].push_back(Edge{d[0],0});
+        g[1].push_back(Edge{d[1],2});
+        g[2].push_back(Edge{d[2],3});
+        g[2].push_back(Edge{d[1],1});
+        g[3].push_back(Edge{d[2],2});
+        g[3].push_back(Edge{d[3],0});
+        int m = 2*min(d[0],d[1]);
+        dijsktra(m);
+        ll ans = 2e18;
+        for(int i=0;i<m;i++){
+            ll tmp = k - dis[1][i];
+            if(tmp<=0) ans=min(ans,dis[1][i]);
+            else ans = min(ans,dis[1][i] + tmp/m*m + (tmp%m>0)*m);
+        }
+        cout<<ans<<endl;
+
+    }
+    return 0;
+}
