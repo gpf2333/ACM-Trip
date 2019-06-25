@@ -1,0 +1,184 @@
+kosaraju详解：https://blog.csdn.net/u013245432/article/details/81390154
+bitset详解：https://blog.csdn.net/majiakun1/article/details/8492929
+
+kosaraju模板:
+
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 1e5+10;
+struct node{
+    int v,next;
+}edge1[maxn],edge2[maxn];
+int tot,n,m,head1[maxn],head2[maxn];
+bool vis[maxn];
+int dfn[maxn],col[maxn],cnt;
+//dfn 记录第几个退出
+void init(){
+    memset(head1,-1,sizeof(head1));
+    memset(head2,-1,sizeof(head2));
+    tot=0;
+    memset(col,0,sizeof(col));
+}
+
+void add(int u,int v){
+    edge1[++tot].v=v;
+    edge1[tot].next=head1[u];
+    head1[u]=tot;
+    edge2[tot].v=u;
+    edge2[tot].next=head2[v];
+    head2[v]=tot;
+}
+void dfs(int s){
+    vis[s]=true;
+    for(int i=head1[s];~i;i=edge1[i].next){
+        if(!vis[edge1[i].v])
+            dfs(edge1[i].v);
+    }
+    dfn[++cnt]=s;
+    return;
+}
+
+void DFS(int s,int k){
+    col[s]=k;
+    printf("%d ",s);
+    for(int i=head2[s];~i;i=edge2[i].next){
+        if(col[edge2[i].v]==0)
+            DFS(edge2[i].v,k);
+    }
+    return;
+}
+void Kosaraju(){
+    for(int i=1;i<=n;i++){
+        if(!vis[i])
+            dfs(i);
+    }
+    int kind=0;
+    for(int i=0;i<n;i++){
+        if(!col[dfn[n-i]]){
+            kind++;
+            DFS(dfn[n-i],kind);
+            printf("\n");
+        }
+    }
+}
+int main(){
+    cin>>n>>m;
+    init();
+    for(int i=0;i<m;i++){
+        int u,v;
+        cin>>u>>v;
+        add(u,v);
+    }
+    Kosaraju();
+    return 0;
+}
+
+hdu:6072
+解题思路：
+求解每天的每个强连通的点的数目
+每个强连通的贡献为CNT*(CNT-1)/2
+由于有1e7次更新 故采用bitset优化
+
+AC代码：
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 255;
+struct Bitset{
+    unsigned int b[8];
+    void reset(int x){
+        memset(b,x,sizeof(b));
+    }// x==0 b数组全为0  x==0xff 则b数组全置为1
+    void flip(int x){
+        b[x>>5]^=1U<<(x&31);
+    }//反转x位置的二进制
+    int get(int x){
+        return (b[x>>5]>>(x&31))&1;
+    }//得到x位是零还是1
+
+}g1[maxn],g2[maxn],vis;//g1表示正图，g2表示反图，vis表示未访问的点集
+int Stack[maxn];
+int n,top,cnt;
+inline int get_x(unsigned int s){
+    int x = 0;
+    while(!(s&1)){
+        ++x;s>>=1;
+    }
+    return x;
+}//得到s中最右边的1之前0的个数
+
+void dfs1(int x){//正向dfs
+    vis.flip(x);
+    unsigned int s;
+    for(int i=0;i<8;i++){
+        while(1){
+            s=vis.b[i]&g1[x].b[i];//状态压缩判断联通点是否走过
+            if(s==0) break;
+            dfs1((i<<5)|get_x(s));//得到下一个点
+        }
+    }
+    Stack[++top]=x;
+}
+void dfs2(int x){//反向dfs
+    vis.flip(x);
+    ++cnt;
+    unsigned s;
+    int y;
+    for(int i=0;i<8;i++){
+        while(true){
+            s=vis.b[i]&g2[x].b[i];
+            if(s==0) break;
+            dfs2((i<<5)|get_x(s));
+        }
+    }
+}
+int main()
+{
+    cin.tie(NULL);
+    ios::sync_with_stdio(0);
+    int t,m;
+    cin>>t;
+    char str[maxn];
+    while(t--){
+        cin>>n>>m;
+        for(int i=0;i<n;i++) g1[i].reset(0),g2[i].reset(0);
+        for(int i=0;i<n;i++){
+            cin>>str;
+            for(int j=0;j<n;j++){
+                if(str[j] == '1'){
+                    g1[i].flip(j), g2[j].flip(i);
+                }
+            }
+        }
+        int m0,u,v;
+        while(m--){
+            cin>>m0;
+            for(int i=0;i<m0;i++){
+                cin>>u>>v;
+                u--;
+                v--;
+                g1[u].flip(v);
+                g2[v].flip(u);
+            }
+            vis.reset(0xff);
+            top = 0;
+            for(int i=0;i<n;i++){
+                if(vis.get(i)){
+                    dfs1(i);
+                }
+            }
+            vis.reset(0xff);
+            int ans = 0;
+            for(int i=top;i>0;i--){
+                if(vis.get(Stack[i])){
+                    cnt = 0;
+                    dfs2(Stack[i]);
+                    ans+=cnt*(cnt-1)/2;
+                }
+            }
+            cout<<ans<<endl;
+
+        }
+    }
+
+    return 0;
+}
