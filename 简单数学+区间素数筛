@@ -1,0 +1,98 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int mod = 998244353;
+const int maxn = 1e6 + 100;
+bool isprime[maxn];
+// bool isprime_big[1000050];
+int prime[maxn], cntp;
+ll a[maxn];
+ll sum[maxn];
+void init(){
+    memset(isprime, 1, sizeof(isprime));
+    cntp = 0, isprime[0] = isprime[1] = 0;
+    for(int i = 2; i < maxn; ++i){
+        if(isprime[i]){
+            prime[++cntp] = i;
+        }
+        for(int j = 1; j <= cntp && (ll)i * prime[j] < maxn; ++j){
+            isprime[i * prime[j]] = 0;
+            if(i % prime[j] == 0) break ;
+        }
+    }
+}
+
+// ll cal(ll n, ll p){
+//     int cnt = 0;
+//     while(!(n % p)){
+//         ++cnt;
+//          n /= p;
+//     }
+//     return cnt;
+// }
+
+ll get(ll n, ll k){
+    ll res = 1;
+    for(int i = 1; i <= cntp && prime[i] <= n; ++i){
+        if(!(n % prime[i])){
+            int cnt = 0;
+            while(!(n % prime[i])){
+                ++cnt;
+                n /= prime[i];
+            }
+            res = res * ((ll)cnt * k % mod + 1) % mod;
+        }
+    }
+    if(n > 1){
+        res = res * (k + 1) % mod;
+    }
+    return res;
+}
+
+ll solve(ll l, ll r, ll k){
+    for(ll i = l; i <= r; ++i){
+        a[i - l] = i;
+        sum[i - l] = 1;
+    }
+    ll val = 0;
+    for(int i = 1; i <= cntp && prime[i] <= r; ++i){
+        for(ll j = max(2LL, (l - 1 + prime[i]) / prime[i]) * prime[i]; j <= r; j += prime[i]){
+            if(a[j - l] % prime[i]) continue ;
+            ll c = 0;
+            while(a[j - l] % prime[i] == 0){
+                a[j - l] /= prime[i];
+                ++c;
+            }
+            sum[j - l] = sum[j - l] * ((c * k + 1) % mod) % mod;
+        }
+    }
+    ll res = 0;
+    int len = r - l + 1;
+    for(int i = 0; i < len; ++i){
+        if(a[i] > 1){
+            sum[i] = (1 + k) % mod * sum[i] % mod;
+            res = (res + sum[i]) % mod;
+        }
+        else{
+            res =(res + sum[i]) % mod;
+        }
+    }
+    return res;
+}
+
+int main(){
+    init();
+    int T;
+    ll l, r, k;
+    scanf("%d",&T);
+    while(T--){
+        scanf("%lld%lld%lld",&l,&r,&k);
+        // ll ans = 0;
+        // for(ll i = l; i <= r; ++i){
+        //     ans =(ans + get(i, k)) % mod;
+        // }
+        // printf("%lld\n", ans);
+        printf("%lld\n",solve(l, r, k));
+    }
+    return 0;
+}
