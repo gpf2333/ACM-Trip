@@ -110,7 +110,7 @@ void dfs2(int u, int t){
 void update_path(int x, int y, int z){
     z %= p;
     while(top[x] != top[y]){ //不在同一条链上
-        if(dep[top[x]] < dep[top[y]]) swap(x, y); //从深度小的链开始往上跳
+        if(dep[top[x]] < dep[top[y]]) swap(x, y); //从深度大的链开始往上跳
         update(id[top[x]], id[x], z, 1, n, 1);
         x = fa[top[x]]; //跳到链头顶点的父亲节点上.
     }
