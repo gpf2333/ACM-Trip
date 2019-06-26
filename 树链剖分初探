@@ -1,0 +1,183 @@
+模板：
+#include<bits/stdc++.h>
+using namespace std;
+#define lson rt << 1
+#define rson rt << 1 | 1
+#define Lson L,mid,lson
+#define Rson mid+1,R,rson
+typedef long long ll;
+const int maxn = 1e5 + 100;
+//线段树模板
+int sum[maxn << 2], lazy[maxn << 2];
+int val[maxn], a[maxn], n, m, p;
+
+inline void pushup(int rt){
+    sum[rt] = (sum[lson] + sum[rson]) % p;
+}
+
+inline void pushdown(int rt, int len){
+    if(lazy[rt]){
+        lazy[lson] += lazy[rt];
+        lazy[rson] += lazy[rt];
+        sum[lson] = (sum[lson] + (ll)lazy[rt] * (len - (len >> 1)) % p)% p ; 
+        sum[rson] = (sum[rson] + (ll)lazy[rt] * (len >> 1) % p) % p;
+        lazy[rt] = 0;
+    }
+}
+
+void build(int L, int R, int rt){
+    lazy[rt] = 0;
+    if(L == R){
+        sum[rt] = val[L] % p;
+        return ;
+    }
+    int mid = (L + R) >> 1;
+    build(Lson);
+    build(Rson);
+    pushup(rt);
+}
+
+void update(int l, int r, int v, int L, int R, int rt){
+    if(l <= L && r >= R){
+        sum[rt] = (sum[rt] + (ll)v * (R - L + 1) % p) % p;
+        lazy[rt] += v;
+        return ;
+    }
+    pushdown(rt, R - L + 1);
+    int mid = (L + R) >> 1;
+    if(l <= mid) update(l, r, v, Lson);
+    if(r > mid) update(l, r, v, Rson);
+    pushup(rt);
+}
+
+int query(int l, int r, int L, int R, int rt){
+    if(l <= L && r >= R){
+        return sum[rt];
+    }
+    pushdown(rt, R - L + 1);
+    int mid = (L + R) >> 1;
+    int res = 0;
+    if(l <= mid) res = (res + query(l, r, Lson)) % p;
+    if(r > mid) res = (res + query(l, r, Rson)) % p;
+    return res;
+}
+//树链剖分部分
+struct Edge{
+    int to, next, w;      
+}edge[maxn << 1];
+int tot, head[maxn];
+int dfs_clock;
+int siz[maxn], top[maxn], son[maxn], dep[maxn], fa[maxn], id[maxn];
+
+void init(int n){
+    tot = dfs_clock = 0;
+    for(int i = 0; i <= n; ++i){
+        head[i] = -1;
+        son[i] = -1;
+    }
+}
+
+inline void addedge(int u, int v, int w = 0){
+    edge[tot] = {v, head[u], w};
+    head[u] = tot++;
+}
+//求出重儿子，轻儿子
+void dfs1(int u, int pa, int d){
+    dep[u] = d, fa[u] = pa, siz[u] = 1;
+    for(int i = head[u]; ~i; i = edge[i].next){
+        int v = edge[i].to;
+        if(v == pa) continue ;
+        dfs1(v, u, d + 1);
+        siz[u] += siz[v];
+        if(son[u] == -1 || siz[v] > siz[son[u]]){
+            son[u] = v;
+        }
+    }
+}
+//求出轻重链
+void dfs2(int u, int t){
+    top[u] = t, id[u] = ++dfs_clock, val[dfs_clock] = a[u];
+    if(son[u] == -1) return ;
+    dfs2(son[u], t);
+    for(int i = head[u]; ~i; i = edge[i].next){
+        int v = edge[i].to;
+        if(v != son[u] && v != fa[u]){
+            dfs2(v, v);
+        }
+    }
+}
+//更新树上x到y路径上所有点值加z
+void update_path(int x, int y, int z){
+    z %= p;
+    while(top[x] != top[y]){ //不在同一条链上
+        if(dep[top[x]] < dep[top[y]]) swap(x, y); //从深度小的链开始往上跳
+        update(id[top[x]], id[x], z, 1, n, 1);
+        x = fa[top[x]]; //跳到链头顶点的父亲节点上.
+    }
+    if(dep[x] > dep[y]) swap(x, y); //同一条链深度小开始查询
+    update(id[x], id[y], z, 1, n, 1);
+}
+//查询x到y上点值之和
+int query_path(int x, int y){
+    int res = 0;
+    while(top[x] != top[y]){
+        if(dep[top[x]] < dep[top[y]]) swap(x, y);
+        res = (res + query(id[top[x]], id[x], 1, n, 1)) % p;
+        x = fa[top[x]];
+    }
+    if(dep[x] > dep[y]) swap(x, y);
+    res = (res + query(id[x], id[y], 1, n, 1)) % p;
+    return res;
+}
+//由于剖分之后,子树中所有节点序号连续,可直接更新.
+void update_son(int x, int z){
+    z %= p;
+    update(id[x], id[x] + siz[x] - 1, z, 1, n, 1);
+}
+
+int query_son(int x){
+    return query(id[x], id[x] + siz[x] - 1, 1, n, 1) % p;
+}
+
+int lca(int x, int y){
+    while(top[x] != top[y]){
+        if(dep[top[x]] < dep[top[y]]) swap(x, y);
+        x = fa[top[x]];
+    }
+    if(dep[x] > dep[y]) swap(x, y);
+    return x;
+}
+
+int main(){
+    int r;
+    scanf("%d%d%d%d",&n,&m,&r,&p);
+    init(n);
+    for(int i = 1; i <= n; ++i) scanf("%d",&a[i]);
+    for(int i = 1; i < n; ++i){
+        int u, v;
+        scanf("%d%d",&u,&v);
+        addedge(u, v);
+        addedge(v, u);
+    }
+    dfs1(r, 0, 1);
+    dfs2(r, r);
+    build(1, n, 1);
+    while(m--){
+        int op, x, y, z;
+        scanf("%d", &op);
+        if(op == 1){
+            scanf("%d%d%d",&x,&y,&z);
+            update_path(x, y, z);
+        }else if(op == 2){
+            scanf("%d%d",&x,&y);
+            printf("%d\n", query_path(x, y));
+        }else if(op == 3){
+            scanf("%d%d",&x,&z);
+            update_son(x, z);
+        }else if(op == 4){
+            scanf("%d",&x);
+            printf("%d\n", query_son(x));
+        }
+    }
+    return 0;
+}
