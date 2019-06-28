@@ -1,0 +1,139 @@
+详解：https://blog.csdn.net/hbhcy98/article/details/50618258
+
+HDU 6087 可持久化Treap
+
+AC代码:
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int N = 2e5+10,M=N*4;
+int n,Q,rt,root,lim,rtop,utop,top;
+int a[N],res[M],used[M];
+
+struct node{
+    int ls,rs,val,sz;
+    ll sum;
+    void init(){
+        ls=rs=val=sz=sum=0;
+    }
+};
+
+struct Treap{
+    int ind,pos[M];
+    node t[M];
+
+    void init(){
+        t[0].init();
+    }
+
+    int newnode(int val = 0){
+        int x;
+        if(rtop) x=res[rtop--];
+        else x=++top;
+        used[++utop]=x;
+        t[x].ls=t[x].rs=0;
+        t[x].val=val;
+        return x;
+    }
+
+    void pushup(int x){
+        int lc = t[x].ls,rc=t[x].rs;
+        t[x].sum=t[lc].sum+t[rc].sum+t[x].val;
+        t[x].sz=t[lc].sz+t[rc].sz+1;
+    }
+
+    void dfs(int x){
+        if(!x) return ;
+        pos[x]=ind;
+        dfs(t[x].ls);
+        dfs(t[x].rs);
+    }
+    void rebuild(){
+        ++ind;
+        dfs(rt);
+        dfs(root);
+        int cnt = 0;
+        for(int i=1;i<=utop;i++){
+            if(pos[used[i]]==ind) used[++cnt]=used[i];
+            else res[++rtop]=used[i];
+        }
+        utop=cnt;
+    }
+    int build(int l,int r){
+        if(l>r) return 0;
+        int mid=(l+r)>>1,x=newnode(a[mid]);
+        t[x].ls = build(l,mid-1);
+        t[x].rs = build(mid+1,r);
+        pushup(x);
+        return x;
+    }
+    int realrnd() {int s=1926081722; return (s+=((s<<3)+1))&(~0u>>1);}
+    bool rnd(int x,int y){return (realrnd()%(x+y)<x);}
+
+    int Merge(int x,int y){
+        if(!x && !y) return 0;
+        int u = newnode();
+        if(!x || !y) t[u]=t[x+y];
+        else if(rnd(t[x].sz,t[y].sz)) t[u]=t[x],t[u].rs=Merge(t[u].rs,y),pushup(u);
+        else t[u]=t[y],t[u].ls=Merge(x,t[u].ls),pushup(u);
+        return u;
+    }
+
+    int qpow(int x,int y){
+        int ret=0;
+        for(;y;y>>=1,x=Merge(x,x)) if(y&1) ret=Merge(ret,x);
+        return ret;
+    }
+    int split(int x,int l,int r){
+        if(l>r) return 0;
+        if(l==1 && r==t[x].sz){
+            int u =newnode();t[u]=t[x];
+            return u;
+        }
+        int lc=t[x].ls,rc=t[x].rs,sz=t[lc].sz;
+        if(r<=sz) return split(lc,l,r);
+        else if(l>sz+1) return split(rc,l-sz-1,r-sz-1);
+        else{
+            int u=newnode(t[x].val);
+            t[u].ls = split(lc,l,sz);t[u].rs=split(rc,1,r-sz-1);
+            pushup(u);
+            return u;
+        }
+    }
+
+    ll getsum(int l,int r){
+        printf("%lld\n",t[split(rt,l,r)].sum);
+    }
+
+    void update(int l,int r,int k){
+        int a = split(rt,1,l-k-1),b=split(rt,l-k,l-1);
+        int c = qpow(b,(r-l+1)/k);
+        int d = split(rt,l-k,l-k-1+(r-l+1)%k),e=split(rt,r+1,n);
+        rt = Merge(a,b);rt=Merge(rt,c);rt=Merge(rt,d);rt=Merge(rt,e);
+
+    }
+
+    void Copy(int l,int r){
+        int a = split(rt,1,l-1),b=split(root,l,r),c=split(rt,r+1,n);
+        rt=Merge(a,b);rt=Merge(rt,c);
+    }
+}tr;
+
+int main(){
+    scanf("%d%d",&n,&Q);
+    lim=450;
+    tr.init();
+    for(int i=1;i<=n;i++){
+        scanf("%d",&a[i]);
+    }
+    rt=root=tr.build(1,n);
+    while(Q--){
+        int opt,l,r,k;
+        scanf("%d%d%d",&opt,&l,&r);
+        if(!(Q%lim)) tr.rebuild();
+        if(opt==1) tr.getsum(l,r);
+        else if(opt==2) scanf("%d",&k),tr.update(l,r,k);
+        else tr.Copy(l,r);
+    }
+    return 0;
+}
