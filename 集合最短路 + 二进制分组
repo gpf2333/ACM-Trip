@@ -1,0 +1,136 @@
+HDU 6166
+http://acm.hdu.edu.cn/showproblem.php?pid=6166
+
+题意：
+给一个有向图 ，并且给你一个点集S，求点集内的任意两点之间的路径的最小值
+加入超级源点 0 与超级会点 n+1
+并将S通过二进制分组成两个集合S1,S2
+跑两个集合之间的最短路 即 0 -> s1  ->s2 ->n+1
+再反着跑从n+1 到 0 的最短路即可
+
+
+AC代码:
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define pii pair<int,int>
+#define mp make_pair
+const int maxn = 1e5+1000;
+const int inf = 0x3f3f3f3f;
+int head[maxn],tot;
+struct node{
+    int u;
+    int w;
+    int next;
+    node(){}
+    node(int u, int w, int next):u(u),w(w),next(next){}
+}edge[maxn*3];
+inline addedge(int u, int v, int w)
+{
+    edge[tot]=node(v,w,head[u]);
+    head[u]=tot++;
+}
+void init()
+{
+    tot = 0;
+    memset(head,-1,sizeof(head));
+}
+int uu[maxn],vv[maxn];
+int ww[maxn];
+int d[maxn];
+bool vis[maxn];
+void dijsktra(int s)
+{
+    memset(vis,0,sizeof(vis));
+    memset(d,inf,sizeof(d));
+    d[s] = 0;
+    priority_queue<pii,vector<pii>,greater<pii>> q;
+    q.push(mp(0,s));
+    while(!q.empty())
+    {
+        int u = q.top().second;
+        q.pop();
+        if(vis[u]) continue;
+        vis[u] = 1;
+        for(int i = head[u];~i;i=edge[i].next)
+        {
+            if(d[edge[i].u] > d[u] + edge[i].w)
+            {
+                d[edge[i].u] = d[u] + edge[i].w;
+                q.push(mp(d[edge[i].u],edge[i].u));
+            }
+        }
+    }
+
+}
+int n,m,k;
+vector<int> v;
+int main()
+{
+    int t;
+    int cas = 0;
+    scanf("%d",&t);
+    while(t--)
+    {
+        v.clear();
+        scanf("%d%d",&n,&m);
+        for(int i=1;i<=m;i++)
+        {
+            scanf("%d%d%d",&uu[i],&vv[i],&ww[i]);
+        }
+        scanf("%d",&k);
+        for(int i=1;i<=k;i++)
+        {
+            int tmp;
+            scanf("%d",&tmp);
+            v.push_back(tmp);
+        }
+        int cnt = 0;
+        int ans = inf;
+        while(cnt<16){
+            init();
+            for(int i=1;i<=m;i++)
+            {
+                addedge(uu[i],vv[i],ww[i]);
+            }
+            for(int i=0;i<v.size();i++)
+            {
+                if((v[i]&(1<<cnt))==0)
+                {
+                    addedge(0,v[i],0);
+                }
+                else
+                {
+                    addedge(v[i],n+1,0);
+                }
+            }
+            dijsktra(0);
+            ans = min(ans,d[n+1]);
+            //cout<<d[n+1]<<" ";
+            init();
+            for(int i=1;i<=m;i++)
+            {
+                addedge(uu[i],vv[i],ww[i]);
+            }
+            for(int i=0;i<v.size();i++)
+            {
+                if((v[i]&(1<<cnt))==1)
+                {
+                    addedge(0,v[i],0);
+                }
+                else
+                {
+                    addedge(v[i],n+1,0);
+                }
+            }
+            dijsktra(n+1);
+            ans = min(ans,d[0]);
+            //cout<<d[0]<<endl;
+            cnt++;
+
+        }
+        printf("Case #%d: %lld\n",++cas,ans);
+
+
+    }
+}
