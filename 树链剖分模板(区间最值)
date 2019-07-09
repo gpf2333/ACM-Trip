@@ -1,0 +1,142 @@
+HDU - 6162 
+
+#include<cstdio>
+#include<cstring>
+#include<iostream>
+#include<algorithm>
+#include<queue>
+#include<vector>
+using namespace std;
+#define lson rt << 1
+#define rson rt << 1 | 1
+#define Lson L,mid,lson
+#define Rson mid+1,R,rson
+typedef long long ll;
+const int maxn = 1e5 + 100;
+const int INF = 1e9 + 100;
+struct Node{
+    int minn, maxx;
+    ll sum;
+}tree[maxn << 2];
+int val[maxn], a[maxn], n, m;
+
+inline void pushup(int rt){
+    tree[rt].sum = (tree[lson].sum + tree[rson].sum);
+    tree[rt].minn = min(tree[lson].minn, tree[rson].minn);
+    tree[rt].maxx = max(tree[lson].maxx, tree[rson].maxx); 
+}
+
+void build(int L, int R, int rt){
+    if(L == R){
+        tree[rt].sum = tree[rt].minn = tree[rt].maxx = val[L];
+        return ;
+    }
+    int mid = (L + R) >> 1;
+    build(Lson);
+    build(Rson);
+    pushup(rt);
+}
+
+ll query_sum(int l, int r, int low, int up, int L, int R, int rt){
+    if(l <= L && r >= R){
+        if(tree[rt].minn >= low && tree[rt].maxx <= up){
+            return tree[rt].sum;
+        }
+    }
+    if(L == R){
+        if(tree[rt].minn >= low && tree[rt].maxx <= up){
+            return tree[rt].sum;
+        }
+        return 0;
+    }
+    int mid = (L + R) >> 1;
+    ll res = 0;
+    if(l <= mid) res = res + query_sum(l, r, low, up, Lson);
+    if(r > mid) res = res + query_sum(l, r, low, up, Rson);
+    return res;
+}
+
+struct Edge{
+    int to, next;
+}edge[(maxn << 1)];
+int tot, head[maxn];
+int dfs_clock;
+int siz[maxn], top[maxn], son[maxn], dep[maxn], fa[maxn], id[maxn];
+
+void init(int n){
+    tot = dfs_clock = 0;
+    for(int i = 0; i <= n; ++i){
+        head[i] = son[i] = -1;
+    }
+}
+
+inline void addedge(int u, int v){
+    edge[tot] = {v, head[u]};
+    head[u] = tot++;
+}
+
+void dfs1(int u, int pa, int d){
+    dep[u] = d, fa[u] = pa, siz[u] = 1;
+    for(int i = head[u]; ~i; i = edge[i].next){
+        int v = edge[i].to;
+        if(v == pa) continue;
+        dfs1(v, u, d + 1);
+        siz[u] += siz[v];
+        if(son[u] == -1 || siz[v] > siz[son[u]]){
+            son[u] = v;
+        }
+    }
+}
+
+void dfs2(int u, int t){
+    top[u] = t, id[u] = ++dfs_clock, val[dfs_clock] = a[u];
+    if(son[u] == -1) return ;
+    dfs2(son[u], t);
+    for(int i = head[u]; ~i; i = edge[i].next){
+        int v = edge[i].to;
+        if(v != son[u] && v != fa[u]){
+            dfs2(v, v);
+        }
+    }
+}
+
+ll query_path_sum(int x, int y, int low, int up){
+    ll res = 0;
+    while(top[x] != top[y]){
+        if(dep[top[x]] < dep[top[y]]) swap(x, y);
+        res = res + query_sum(id[top[x]], id[x], low, up, 1, n, 1);
+        x = fa[top[x]];
+    }
+    if(dep[x] > dep[y]) swap(x, y);
+    res = res + query_sum(id[x], id[y], low, up, 1, n, 1);
+    return res;
+}
+
+int query[maxn];
+ll ans[maxn];
+int main(){
+    while(~scanf("%d%d",&n,&m)){
+        init(n);
+        for(int i = 1; i <= n; ++i){
+            scanf("%d",&a[i]);
+        }
+        int x, y;
+        for(int i = 1; i < n; ++i){
+            scanf("%d%d",&x, &y);
+            addedge(x, y);
+            addedge(y, x);
+        }
+        dfs1(1, 0, 1);
+        dfs2(1, 1);
+        build(1, n, 1);
+        int low, up;
+        for(int i = 0; i < m; ++i){
+            scanf("%d%d%d%d",&x, &y, &low, &up);
+            ans[i] = query_path_sum(x, y, low, up);
+        }
+        for(int i = 0; i < m; ++i){
+            printf("%lld%c", ans[i], (i == m - 1) ? '\n' : ' ');
+        }
+    }
+    return 0;
+}
