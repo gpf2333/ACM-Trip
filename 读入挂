@@ -15,7 +15,7 @@ struct FastIO
     }
     inline int xint()
     {
-        int s = 1, c = xchar(), x = 0;
+        int s = 1, c = xchar(), x = 0;// 如果为ll 类型 x置为 ll
         while(c<=32) c = xchar();
         if(c=='-') s = -1, c = xchar();
         for(;'0'<=c && c<='9';c=xchar()) x = x*10+c-'0';
