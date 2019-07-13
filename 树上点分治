@@ -1,0 +1,149 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef unsigned long long ull;
+typedef long long ll;
+const int maxn = 5*1e5+100;
+const int mod = 1e9+7;
+const int mod1 = 1e9+9;
+const ll mod2 = 1e17+1;
+const int INF = 0x3f3f3f3f;
+map<int,int> mp;
+struct node{
+    int to;
+    int next;
+    int w;
+}edge[maxn*2];
+int tot,head[maxn];
+bool vis[maxn];
+int sim[maxn],mxson[maxn];
+int MX,root,summar;
+//ll dis[maxn];
+ll Ans ;
+int S;
+void init()
+{
+    memset(head,-1,sizeof(head));
+    tot=0;
+    memset(vis,0,sizeof(vis));
+}
+ll quickpow(ll a,int b)
+{
+    //int mod = rand();
+    ll ans = 1;
+    while(b)
+    {
+        if(b&1) ans = ans * a % mod;
+        a = a * a % mod;
+        b >>= 1;
+    }
+    return ans;
+}
+ll quickpow1(ll a,int b)
+{
+    ll ans = 1;
+    while(b)
+    {
+        if(b&1) ans = ans * a % mod1;
+        a = a * a % mod1;
+        b >>= 1;
+    }
+    return ans;
+}
+inline addedge(int u, int v, int w)
+{
+    edge[tot].to = v;
+    edge[tot].w = w;
+    edge[tot].next = head[u];
+    head[u] = tot++;
+}
+void getroot(int u, int fa)
+{
+    sim[u] = 1; mxson[u] = 0;
+    for(int i = head[u]; ~i; i = edge[i].next)
+    {
+        int v = edge[i].to;
+        if(v == fa || vis[v]) continue;
+        getroot(v, u);
+        sim[u] = sim[u] + sim[v];
+        mxson[u] = max(sim[v], mxson[u]);
+    }
+    mxson[u] = max(mxson[u], S - sim[u]);
+    if(mxson[u] < MX){root = u; MX = mxson[u];}
+}
+void getdis(int u,int fa,ll dist)
+{
+    ++summar;
+    mp[dist]++;
+    for(int i = head[u]; ~i; i = edge[i].next)
+    {
+        int v = edge[i].to;
+        if(vis[v] || v == fa) continue;
+        getdis(v,u,dist^edge[i].w);
+    }
+}
+ll solve(int sta,int len1)
+{
+    summar = 0;
+    //memset(dis, 0, sizeof(dis));
+    mp.clear();
+    getdis(sta, 0, len1);
+    ll tt = (ll)summar * (summar-1)/2;
+//    for(int i = 1; i <= summar; i++)
+//        mp[dis[i]]++;
+    for(auto it: mp)
+    {
+        if(it.second>=2)
+        {
+            tt -= (ll)it.second*(it.second-1)/2;
+        }
+    }
+   // mp.clear();
+    return tt;
+}
+void Divide(int tr)
+{
+    Ans += solve(tr, 0);
+    //cout<<"zuheshu: "<<tr<<" "<<tmpp<<endl;
+    vis[tr] = true;
+    for(int i = head[tr]; ~i; i = edge[i].next)
+    {
+        int v = edge[i].to;
+        if(vis[v]) continue;
+        //ll tmppp = solve(v, edge[i].w);
+        Ans -= solve(v, edge[i].w);
+        //cout<<"rongci: "<<tmppp<<endl;
+        S = sim[v]; root = 0;
+        MX = INF ;
+        getroot(v, 0);
+        Divide(root);
+    }
+    return ;
+}
+int main()
+{
+    cin.tie(NULL);
+    ios::sync_with_stdio(0);
+    init();
+    int n;
+    scanf("%d",&n);
+    for(int i = 1; i < n; i++)
+    {
+        int u, v;
+        ll w;
+        scanf("%d%d%d",&u,&v,&w);
+        ll tmp = (quickpow(2LL, w)+quickpow1(2LL,w));
+        //ll tmpp = tmp % mod1;
+        //cout<<tmp<<endl;
+        addedge(u, v, tmp);
+        addedge(v, u, tmp);
+    }
+    Ans = 0;
+    MX = INF;
+    S = n;
+    getroot(1, 0);
+    Divide(root);
+    printf("%lld\n",Ans);
+
+
+
+}
