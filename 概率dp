@@ -1,0 +1,99 @@
+概率dp是一类求期望/概率的题目
+简单总结一下做法
+对于求期望
+1.先将状态定义出来
+2.然后对于每一个状态uu，考虑他可能的下一个状态vv，于是从uu到vv连一条概率为puv​puv的边。于是写出一个方程
+    dp[u]=(∑dp[v]∗p[u][v])+1
+
+假如这是一个DAG，那么这是个水题，倒着推回去就结束了。
+
+假如不是一个DAG，那么可能会有下面这些东西
+
+    自环
+    一条连回某个固定点的边
+    一条连回根据当前点确定的某个点的边
+    更多。。。
+
+那么一种思路是要转化成一个DAG，在写出方程后：
+
+    自环：移项，消掉
+    把那些不和谐的边拆出来，设一个参数方程：
+    dp[i]=A1[i]dp[f1(i)]+A2[i]dp[f2(i)]+...An[i]dp[fn(i)]+B[i]
+
+dp[i]=A1​[i]dp[f1​(i)]+A2​[i]dp[f2​(i)]+...An​[i]dp[fn​(i)]+B[i]
+其中fk(i) fk​(i)是那些异常点，那些拓扑序靠后的点都被扔进了B[i]B[i]里，然后把这一坨东西丢进刚开始写出的那个方程的右边，把dp[v]dp[v]都代换掉，
+就会写出来一个参数为ii的参数方程，接下来问题转换为求At[i] At​[i],看一下同类项，就可以把参数的递推式写出来。
+
+对于求概率，类似期望，不过要正着推；比较好考虑的的一个原因是结束点到结束点的期望肯定是零，而最初状态的概率一般是好算的。
+
+ZOJ3640
+ac代码：
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 200000;
+int c[maxn];
+int t[maxn];
+double dp[maxn];
+int n, f;
+double dfs(int ff)
+{
+    if(dp[ff] > 0) return dp[ff];
+    for(int i = 1; i <= n; i++)
+    {
+        if(ff > c[i])
+            dp[ff] += 1.0 * t[i];
+        else
+            dp[ff] += dfs(ff + c[i]) + 1.0;
+    }
+    dp[ff] = dp[ff] / n;
+    return dp[ff];
+}
+const double p = (1.0 + sqrt(5.0))/2.0;
+int main()
+{
+    //cout << p << endl;
+    while(~scanf("%d %d", &n, &f))
+    {
+        memset(dp, 0, sizeof(dp));
+       for(int i = 1; i <= n; i++)
+       {
+           scanf("%d", & c[i]);
+           t[i] = int(1.0 * p * c[i] * c[i]);
+          // cout<< t[i]<<" ";
+       }
+       printf("%.3lf\n",dfs(f));
+
+    }
+}
+
+hud 3853：
+ac代码:
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 1e3 + 100;
+int R, C;
+double dp[maxn][maxn];
+double p[maxn][maxn][3];
+int main()
+{
+    while(~scanf("%d %d", &R, &C))
+    {
+        for(int i = 1; i <= R; i++)
+        {
+            for(int j = 1; j <= C; j++)
+                scanf("%lf %lf %lf", &p[i][j][0], &p[i][j][1], &p[i][j][2]);
+        }
+        memset(dp, 0, sizeof(dp));
+        for(int i = R; i >= 1; i--)
+        {
+            for(int j = C; j >= 1; j--)
+            {
+                if(i == R && j == C) continue;
+                if(p[i][j][0] == 1) continue;
+                dp[i][j] = (dp[i][j+1] * p[i][j][1] + dp[i+1][j] * p[i][j][2] + 2.0)/(1.0 - p[i][j][0]);
+            }
+        }
+        printf("%.3lf\n", dp[1][1]);
+    }
+}
+
