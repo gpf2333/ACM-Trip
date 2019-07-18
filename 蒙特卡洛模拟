@@ -1,0 +1,161 @@
+2019牛科多校赛第一场 F：
+
+给一个三角形，问三角形内随机一点与三角形三个点构成三角形的最大值的期望
+期望为 11/18 *S
+答案要求乘36 
+故为 22*S
+要求面积为整形，故不能用海伦算法，要用叉积来算
+AC：
+#include<bits/stdc++.h>
+#define mem(a,b) memset(a,b,sizeof(a))
+typedef long long ll;
+using namespace std;
+int main()
+{
+    ll x1, y1, x2, y2, x3, y3;
+    while(cin >> x1 >> y1 >> x2 >> y2 >> x3 >> y3)
+    {
+        ll s = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
+        s = abs(s);
+        cout << 11 * s << endl;
+    }
+}
+/*
+#include<bits/stdc++.h>
+#define mem(a,b) memset(a,b,sizeof(a))
+typedef long long ll;
+using namespace std;
+const int maxn = 1e5+5;
+const int INF = 0x3f3f3f3f;
+const int mod = 1e8;
+double a1,a2,b1,b2,c1,c2;
+double S;
+
+struct Point{
+    double x;
+    double y;
+    Point(double a=0.0, double b=0.0) :x(a), y(b){ }
+}A,B,C,T;
+double cross(const Point &a, const Point &b, const Point &p)
+{
+    return (b.x - a.x)*(p.y - a.y) - (b.y - a.y)*(p.x - a.x);
+}
+bool toLeft(const Point &a, const Point &b, const Point &p)
+{
+    return cross(a, b, p) > 0;
+}
+bool inTriangle(const Point &p, const Point &a, const Point &b, const Point &c)
+{
+    bool res = toLeft(a, b, p);
+    if (res != toLeft(b, c, p))
+        return false;
+    if (res != toLeft(c, a, p))
+        return false;
+    if (cross(a, b, c) == 0)
+        return false;
+    return true;
+}
+
+double getSS(double x1, double y1, double x2, double y2, double x3, double y3){
+    double a = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
+    double b = sqrt((x1-x3)*(x1-x3)+(y1-y3)*(y1-y3));
+    double c = sqrt((x2-x3)*(x2-x3)+(y2-y3)*(y2-y3));
+    double p = (a + b + c)/2;
+    double s = sqrt(p*(p-a)*(p-b)*(p-c));
+    return s;
+}
+
+int main()
+{
+    ios::sync_with_stdio(0);cin.tie(0);
+    while(cin>>a1>>a2>>b1>>b2>>c1>>c2)
+    {
+        A.x=a1;A.y=a2;B.x=b1;B.y=b2;C.x=c1;C.y=c2;
+        S = getSS(a1,a2,b1,b2,c1,c2);
+        if(S == 0) cout<<0<<endl;
+        else{
+            double tmp = 0.0;
+            mt19937 Rand(time(0));
+            int n = 1e6;
+            double mx = (max(A.x, max(B.x, C.x)));
+            double my = (max(A.y, max(B.y, C.y)));
+            int m = n;
+            int cnt = 0;
+            while(m--){
+                T.x = Rand()% mod * mx / mod;
+                T.y = Rand()% mod * my / mod;
+                if(inTriangle(T,A,B,C)){
+                    double s1 = getSS(T.x, T.y, a1, a2, b1, b2);
+                    double s2 = getSS(T.x, T.y, a1, a2, c1, c2);
+                    double s3 = getSS(T.x, T.y, b1, b2, c1, c2);
+                    tmp += max(s1, max(s2, s3));
+                    cnt++;
+                }
+            }
+            ll ans = 36 * tmp / cnt;
+            cout << 36 * tmp / cnt << " " << S << " " <<  ans / S << endl;
+
+        }
+
+    }
+}
+
+*/
+
+
+
+
+
+ECNUOJ 3658. 清点星辰
+每天在1x1矩形内随机生成n个点， 问n个点的最小距离
+蒙特卡洛模拟
+
+#include <bits/stdc++.h>
+using namespace std;
+struct Point{
+    double x, y;
+    Point(double x = 0.0, double y = 0.0):x(x), y(y){}
+};
+double getdis(const Point &p1, const Point &p2)
+{
+    return sqrt((p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y));
+}
+int main()
+{
+    int n;
+    cin >> n;
+    int t = 1e2;
+    int m = t;
+    double mx = 1;
+    double my = 1;
+    mt19937 Rand(time(0));
+    vector<Point> v;
+    if(n >= 1000)
+    {
+        cout << 0 << endl;
+        exit(0);
+    }
+    time_t s = clock();
+
+    double ans = 0;
+    int cnt = 0;
+    while(clock()-s<1.8*CLOCKS_PER_SEC)
+    {
+        v.clear();
+        cnt ++;
+        double tmp = 5;
+        for(int i = 1; i <= n; i++)
+            v.push_back(Point(Rand() % 10000000 * mx / 10000000, Rand() % 10000000 * my / 10000000 ));
+        for(int i = 0; i < n; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                if(i == j) continue;
+                tmp = min(tmp, getdis(v[i], v[j]));
+            }
+        }
+        ans += tmp;
+    }
+    ans = ans / cnt;
+    cout << ans << endl;
+}
