@@ -1,0 +1,150 @@
+
+在ACM领域，线性基主要用来处理有关异或和的极值问题。根据异或按照二进制数位进行的方式，
+我们可以把一个数字拆成它的二进制表示形式，而这个二进制形式拆成一位一位的，可以用向量
+来表示。显然，一组线性无关的向量可以张起一个向量空间，我们同样可以考虑构造这样一组数
+字的二进制形式组成的线性基。在这个线性基里面，我可以通过基底的线性组合、异或运算，表
+示所有的异或结果。
+
+要构造这样的线性基，首先要满足一个性质：任取向量组中两个向量a、b，把其中一个替换成a 
+xor b，这组向量线性组合得到的线性空间相同。这个性质对于xor来说是显然的，因为xor偶数
+具有抵消性。有了这个性质，就可以利用它对加入的向量进行修改。基本思路是：对于一个新加
+入的数字，从最高为考试往后扫，如果某一位该向量是1，但是之前的向量组中没有一个这一位是
+1，那么这一位就放如这个数字并且break；如果之前已经有该位为1的，那么该数字异或该位之
+前对应的数字。最后的结果是，新加入的数字x，要么被添加到某一个二进制位，要么变成0，说
+明这个数字对应的二进制向量不属于极大线性无关组。线性基构造完毕，我们就要求其极值。很
+多时候我们需要求一堆数字最大的异或和，这个时候就要用到线性基。线性基构造完毕之后，根
+据它的定义，任何线性基所张的向量空间的所有向量都能够表示为其线性组合。所以我们只需要
+找，这个线性基中最大的向量即可。做法就是，从高位开始取线性基的每一个基底，如果异或能
+够使得结果变大，那么就异或。同时，这个还支持有初始值的最大值，因为线性基可以表示所有
+的向量，所以即使有一个初始值也是能够一起计算最大值的。
+
+牛客多校赛H：https://ac.nowcoder.com/acm/contest/881/H
+题解：
+题意：
+给定n个整数，求其中异或和为0的子集的大小的和。
+
+题解思路：
+首先转化为每个可以通过异或表示0的数贡献它参与的子集数。
+思考的过程分两步。一开始不管三七二十一先对n个整数求一次线性基B1，记其秩为r。
+
+第一步：
+先考虑线性基B1外的数（假如有的话）产生的贡献。枚举每一个数，记这个数为x，除去这个数，
+线性基B1外还有n−r−1个数，他们可以自由组合出2^(n−r−1)种子集，加上x本身之后，必定能被线
+性基B1表示，故这些子集都会使得x发生贡献。这样的x共有n−r个。
+
+第二步：
+再考虑线性基B1中的数产生的贡献。枚举每一个数，记这个数为x，这个数产生的贡献来源于他
+在第一步中被使用的次数。那怎么判断这个数被使用了多少次呢？把除去这个数x的n−1个数求出
+线性基B3。假如x不能被线性基B3表示，则用不着x其他子集也可以组成0，也就是说，选择x之后
+不可能可以构造出异或和为0的子集。否则，选择x之后，配上这个线性基B3，可以把除去x和B3的
+总共n−r−1个数，自由组合出的2^(n−r−1)种子集都配成0。
+
+第三步：
+最后是快速得到B3的办法，注意到B3必定先通过除去B1的n−r个数构造，可以把n−r先构造出B2，
+然后再插入B1内除x的r−1个数构成。
+
+注意MN不能取64否则会爆掉ll。
+
+AC:
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int MN = 63;
+const int mod = 1e9 + 7;
+const int maxn = 1e5 + 50;
+ll num[maxn];
+ll quickpow(ll a, int b)
+{
+    ll ans = 1;
+    while(b )
+    {
+        if(b & 1) ans = ans * a % mod;
+        a = a * a % mod;
+        b >>= 1;
+    }
+    return ans;
+}
+struct LinearBase
+{
+    ll base[MN + 1];
+    bool flag;//该线性基能否表示0
+    int rk;
+
+    void Copy(LinearBase b)
+    {
+        rk = b.rk;
+        flag = b.flag;
+        memcpy(base, b.base, sizeof(base));
+    }
+    void Clear()
+    {
+        rk = 0;
+        flag = false;
+        memset(base, 0, sizeof(base));
+    }
+    //尝试向线性基中插入一个值
+    void Insert(ll x)
+    {
+        for(int i = MN; ~i; i--)
+            if(x & (1LL << i))
+                if(!base[i])
+                {
+                    base[i] = x;
+                    rk ++;
+                    return;
+                }
+                else
+                    x^=base[i];
+        flag = true;
+    }
+    //判断该线性基能否表示x
+    bool Check(ll x)
+    {
+        for(int i = MN; ~i; i--)
+            if(x & (1LL << i))
+            {
+                if(!base[i]) return false;
+                else x^=base[i];
+            }
+        return true;
+    }
+}B1, B2, B3;
+vector<ll> B1id;
+int main()
+{
+    int n;
+    while(~scanf("%d", &n)){
+        for(int i = 1; i <= n; i++) scanf("%lld", &num[i]);
+        B1.Clear();
+        B2.Clear();
+        B3.Clear();
+        B1id.clear();
+        for(int i = 1; i <= n; i++){
+            if(B1.Check(num[i])){
+                B2.Insert(num[i]);
+            }
+            else{
+                B1.Insert(num[i]);
+                B1id.push_back(num[i]);
+            }
+        }
+        ll ans = 0;
+        ll tmp = 1LL;
+        if(n != B1.rk){
+            tmp = quickpow(2LL, n - B1.rk - 1);
+            ans = (ans + tmp * (n - B1.rk) % mod) % mod;
+        }
+        for(int i = 0; i < B1id.size(); i++){
+            B3.Copy(B2);
+            for(int j = 0; j < B1id.size(); j++){
+                if(i!=j) B3.Insert(B1id[j]);
+            }
+            if(B3.Check(B1id[i])){
+                ans = (ans + tmp) % mod;
+            }
+        }
+        printf("%lld\n", ans);
+    }
+    return 0;
+}
+
