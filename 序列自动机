@@ -1,0 +1,83 @@
+2019杭电多校赛第一场1009 string
+
+序列自动机加贪心
+
+#include<bits/stdc++.h>
+using namespace std;
+const int maxn = 1e5 + 100;
+int cnt[30], last[30], l[30], r[30]; // cnt[i] 使用了i字符的个数  
+int sum[maxn][30], Next[maxn][30]; // sum[i][j] 位置i后有多少个j字符   Next[i][j] 位置i后j字符出现的第一个位置
+int n, m, tot;
+char s[maxn], ans[maxn];
+bool check(int x)
+{
+    if(x == n + 1)
+    {
+        for(int i = 0; i < 26; i++)
+        {
+            if(cnt[i] >= l[i] && cnt[i] <=r[i]) continue;
+            return false;
+        }
+        if(tot != m) return false;
+        return true;
+    }
+    bool flag = true;
+    cnt[s[x] - 'a'] ++;
+    tot ++;
+    for(int i = 0; i < 26; i++){
+        if(sum[x + 1][i] + cnt[i] >= l[i] && cnt[i] <= r[i]) continue;
+        else flag = false;
+    }
+    int tmp = 0; // 计算剩余
+    for(int i = 0; i < 26; i++) tmp += max(l[i] - cnt[i], 0);
+    if(m - tot > n - x + 1) flag = false;
+    if(m - tot < tmp) flag = false;
+    if(!flag){
+        tot--;
+        cnt[s[x] - 'a'] --;
+        return false;
+    }
+    return true;
+}
+int main()
+{
+    while(~scanf("%s", s + 1)){
+        scanf("%d", &m);
+        tot = 0;
+        n = strlen(s + 1);
+        for(int i = 0; i < 26; i++) scanf("%d%d", &l[i], &r[i]);
+        memset(sum[n + 1], 0, sizeof(sum[n + 1]));
+        memset(cnt, 0, sizeof(cnt));
+        for(int j = 0; j < 26; j++) last[j] = n + 1;
+        for(int i = n; i >= 1; i--){
+            for(int j = 0; j < 26; j++){
+                sum[i][j] = sum[i + 1][j];
+                Next[i][j] = last[j];
+            }
+            sum[i][s[i] - 'a'] ++;
+            last[s[i] - 'a'] = i;
+        }
+        for(int i = 0; i < 26; i++) Next[0][i] = last[i];
+        int pos = 0;
+        while(pos <= n && tot < m){
+            bool flag = 0;
+            for(int j = 0; j < 26; j++)
+            {
+                if(check(Next[pos][j])){
+                    ans[tot] = 'a' + j;
+                    pos = Next[pos][j];
+                    flag = 1;
+                    break;
+                }
+            }
+            if(!flag)
+                break;
+        }
+        if(tot == m){
+            ans[tot + 1] = 0;
+            printf("%s\n", ans + 1);
+        }
+        else
+            printf("-1\n");
+    }
+}
