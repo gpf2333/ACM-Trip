@@ -97,3 +97,41 @@ int main()
     }
 }
 
+HDU 6568
+g(i) 为拿着机器人从i点到i+1点需要的时间期望
+g(i) = (1 − p) + p[g(i) + 2((1 − q)^(l−i)*(l − i) + ∑[x=0 l-i-1]q(1 − q)^x * x)]
+
+ACcode:
+#include <bits/stdc++.h>
+using namespace std;
+double p, q;
+int l;
+const int maxn = 1e5 + 100;
+double a[maxn];
+double sum[maxn];
+void init(int n)
+{
+    a[0] = 1;
+    sum[0] = 0;
+    for(int i = 1; i <= n; i++)
+    {
+        a[i] = a[i - 1] * (1.0 - q);
+        sum[i] = sum[i - 1] + a[i] * i;
+    }
+}
+int main()
+{
+    while(~scanf("%d%lf%lf", &l, &p, &q)){
+        init(l);
+        double ans = 0;
+        for(int i = 0; i < l; i++)
+        {
+            ans += 1.0 + (2 * p * (a[l - i] * (l - i) + q * sum[l - i - 1])) / (1.0 - p);
+        }
+        printf("%.10lf\n", ans);
+    }
+    return 0;
+}
+
+
+
