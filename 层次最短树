@@ -1,0 +1,71 @@
+   #include<bits/stdc++.h>
+    #define pii pair<int,int>
+    using namespace std;
+    const int maxn=1e5+5;
+    const int maxk=15;
+    const int INF=0x3f3f3f3f;
+    int n,m,s,t,k,d[maxn][maxk];
+    bool vis[maxn][maxk];
+    vector<pii> Edge[maxn];
+    void init(){
+        for(int i=0;i<=n*2;i++) Edge[i].clear();
+        memset(d,0x3f,sizeof(d));
+        memset(vis,0,sizeof(vis));
+    }
+    void Dijkstra(int s){
+        d[s][0]=0;priority_queue<pii> que;que.push({0,s});
+        while(!que.empty()){
+            int u=que.top().second;que.pop();
+            int c=u/n;u%=n;
+            if(vis[u][c]) continue;vis[u][c]=1;
+            for(int j=0;j<Edge[u].size();j++){
+                int v=Edge[u][j].first;
+                if(!vis[v][c]&&d[v][c]>d[u][c]+Edge[u][j].second){
+                    d[v][c]=d[u][c]+Edge[u][j].second;que.push({-d[v][c],v+c*n});
+                }
+            }
+            if(c<k){
+                for(int j=0;j<Edge[u].size();j++){
+                    int v=Edge[u][j].first;
+                    if(!vis[v][c+1]&&d[v][c+1]>d[u][c]){
+                        d[v][c+1]=d[u][c];que.push({-d[v][c+1],v+(c+1)*n});
+                    }
+                }
+            }
+        }
+    }
+    /* int main()
+    {
+        ios::sync_with_stdio(0);cin.tie(0);关同步WA+RE
+        while(cin>>n>>m>>k){
+            init();cin>>s>>t;//s=1;t=n;
+            int a,b,x;
+            while(m--){
+                cin>>a>>b>>x;
+                for(int i=0;i<=k;i++){
+                    Edge[a].push_back({b,x});
+                    Edge[b].push_back({a,x});
+                }
+            }
+            Dijkstra(s);int ans=INF;
+            for(int i=0;i<=k;i++) ans=min(ans,d[t][i]);
+            cout<<ans<<endl;
+        }
+    } */
+    int main()
+    {
+        while(~scanf("%d%d%d",&n,&m,&k)){
+            init();scanf("%d%d",&s,&t);int a,b,x;
+            while(m--){
+                scanf("%d%d%d",&a,&b,&x);
+                for(int i=0;i<=k;i++){
+                    Edge[a].push_back({b,x});
+                    Edge[b].push_back({a,x});
+                }
+            }
+            Dijkstra(s);int ans=INF;
+            for(int i=0;i<=k;i++) ans=min(ans,d[t][i]);
+            printf("%d\n",ans);
+        }
+        return 0;
+    }
