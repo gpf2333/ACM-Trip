@@ -1,0 +1,97 @@
+树：
+对于一棵树，我们用r表示根节点，u表示树上的某个非根节点。很容易发现从r->u路径上的所有点都是支配点，而idom[u]就是u的父节点。
+这个可以在O(n)的时间内实现。
+
+DAG（有向无环图）：
+因为是有向无环图，所以我们可以按照拓扑序构建支配树。假设当前我们构造到拓扑序中第x个节点编号为u，那么拓扑序中第1 ~ X-1个节
+点已经处理好了，考虑所有能够直接到达点u的节点，对于这些节点我们求出它们在支配树上的最近公共祖先v，这个点v就是点u在支配树上的父亲。
+如果使用倍增求LCA，这个问题可以在O((n+m)log2n)的时间内实现。
+
+
+DAG:
+求支配树 及其各点深度：
+
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 2e5 + 10;
+vector<int> G[maxn];
+vector<int> RG[maxn];//反向图
+int tot, n, m;
+int deg[maxn];//入度
+int dep[maxn];//深度
+int fa[maxn][20];
+int topo[maxn];
+void bfs()
+{
+    queue<int > q;
+    for(int i = 1; i <= n; i++){
+        if(deg[i] == 0){
+            RG[n + 1].push_back(i);
+            G[i].push_back(n + 1);
+            q.push(i);
+        }
+    }
+    while(!q.empty())
+    {
+        int u = q.front(); q.pop();
+        topo[++tot] = u;
+        for(auto v : RG[u]){
+            deg[v]--;
+            if(deg[v] == 0) q.push(v);
+        }
+    }
+}
+int LCA(int x, int y){
+    if(dep[x] > dep[y]) swap(x, y);
+    for(int i = 19; i >= 0; i--)
+        if(dep[y] > dep[x] && dep[fa[y][i]] >= dep[x])
+            y = fa[y][i];
+    for(int i = 19; i >= 0; i--)
+        if(fa[x][i] != fa[y][i]) x = fa[x][i], y = fa[y][i];
+    return x == y ? x : fa[x][0];
+}
+void GetDepth()
+{
+    dep[n + 1] = 1;
+    for(int i = 1; i <= n; i++){
+        int u  = topo[i], father = -1;
+        for(auto v : G[u])
+            father = (father == -1 ? v : LCA(father, v));
+        dep[u] = dep[father] + 1;
+        fa[u][0] = father;
+        for(int i = 1; i <= 19; i++)
+            fa[u][i] = fa[fa[u][i - 1]][i - 1];
+    }
+}
+int main()
+{
+    cin.tie(NULL);
+    ios::sync_with_stdio(0);
+    int t;
+    cin >> t;
+    while(t--){
+        cin >> n >> m;
+        tot = 0;
+        for(int i = 1 ; i <= n + 1; i++){
+            G[i].clear(), RG[i].clear();
+            deg[i] = 0;
+        }
+        for(int i = 1; i <= m; i++){
+            int u, v;
+            cin >> u >> v;
+            G[u].push_back(v);
+            RG[v].push_back(u);
+            deg[u]++;
+        }
+        bfs();
+        GetDepth();
+        int q;
+        cin >> q;
+        while(q--){
+            int a, b;
+            cin >> a >> b;
+            cout << dep[a] + dep[b] - dep[LCA(a, b)] - 1 << endl;
+        }
+    }
+    return 0;
+}
