@@ -95,3 +95,135 @@ int main()
     }
     return 0;
 }
+
+
+最短路上跑支配树：
+CF 757F
+https://codeforces.com/problemset/problem/757/F
+
+
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define pli pair<ll, int>
+const int maxn  = 2e5 + 10;
+const ll inf = 0x3f3f3f3f3f3f3f3f;
+vector<pli> G[maxn];
+vector<int> RE[maxn], D[maxn];
+vector<int> Dt[maxn];
+// G 原图, D 最短路图, RE D的反向图
+// Dt 支配树
+bool vis[maxn];
+ll dis[maxn];
+int deg[maxn], dep[maxn], siz[maxn];
+int fa[maxn][20];
+int n, m, s;
+int tot;
+int ans = 0;
+int topo[maxn];
+void spfa(int s){// 求最短路图
+    memset(vis, 0, sizeof(vis));
+    for(int i = 1; i <= n; i++) dis[i] = inf;
+    queue<int> q;
+    q.push(s);
+    dis[s] = 0;
+    vis[s] = true;
+    while(!q.empty()){
+        int u = q.front();
+        q.pop();
+        for(int i = 0; i < G[u].size(); i++){
+            int v = G[u][i].second;
+            ll w = G[u][i].first;
+            if(dis[v] > dis[u] + w){
+                dis[v] = dis[u] + w;
+                if(!vis[v]){
+                    vis[v] = true;
+                    q.push(v);
+                }
+            }
+        }
+        vis[u] = false;
+    }
+}
+void dfs1(int cur){//找最短路图
+    vis[cur] = true;
+    for(int i = 0; i < G[cur].size(); i++){
+        int v = G[cur][i].second;
+        ll w = G[cur][i].first;
+        if(dis[v] == dis[cur] + w){
+            D[cur].push_back(v);
+            RE[v].push_back(cur);
+            deg[v]++;
+            if(!vis[v]) dfs1(v);
+        }
+    }
+}
+void dfs2(int cur){//找支配树最大子树
+    siz[cur] = 1;
+    for(int i = 0; i < Dt[cur].size(); i++){
+        int v = Dt[cur][i];
+        dfs2(v);
+        siz[cur] += siz[v];
+    }
+    if(s != cur) ans = max(ans, siz[cur]);
+}
+int LCA(int x, int y){
+    if(dep[x] > dep[y]) swap(x, y);
+    for(int i = 19; i >= 0; i--)
+        if(dep[y] > dep[x] && dep[fa[y][i]] >= dep[x])
+            y = fa[y][i];
+    for(int i = 19; i >= 0; i--)
+        if(fa[x][i] != fa[y][i]) x = fa[x][i], y = fa[y][i];
+    return x == y ? x : fa[x][0];
+}
+void toposort(){
+    queue<int > q;
+    for(int i = 1; i <= n; i++){
+        if(deg[i] == 0){
+            q.push(i);
+        }
+    }
+    while(!q.empty()){
+        int u = q.front(); q.pop();
+        topo[++tot] = u;
+        for(auto v : D[u]){
+            deg[v]--;
+            if(!deg[v]) q.push(v);
+        }
+    }
+}
+void GetDepth()
+{
+    dep[s] = 1;
+    for(int i = 1; i <= n; i++){
+        int u  = topo[i], father = 0;
+        for(auto v : RE[u])
+            father = (father == 0 ? v : LCA(father, v));
+        dep[u] = dep[father] + 1;
+        fa[u][0] = father;
+        Dt[father].push_back(u); // 建立支配树
+        for(int i = 1; i <= 19; i++)
+            fa[u][i] = fa[fa[u][i - 1]][i - 1];
+    }
+}
+int main()
+{
+    cin.tie(NULL);
+    ios::sync_with_stdio(0);
+    cin >> n >> m >> s;
+    for(int i = 1; i <= m; i++){
+        int u, v;
+        ll w;
+        cin >> u >> v >> w;
+        G[u].push_back(make_pair(w, v));
+        G[v].push_back(make_pair(w, u));
+    }
+    spfa(s);
+    dfs1(s);
+    tot = 0;
+    toposort();
+    GetDepth();
+    dfs2(s);
+    cout << ans << endl;
+    return 0;
+}
