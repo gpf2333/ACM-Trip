@@ -1,0 +1,78 @@
+三维莫队:
+HDU6610
+
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int maxn = 1e5 + 5;
+const int MAXN = (1 << 21) + 5;
+int block;
+struct Q{
+    int s, e;
+    int t;
+    int id;
+}q[maxn];
+bool operator < (Q a, Q b) {
+    if(a.s / block != b.s / block) return a.s < b.s;
+    if(a.e / block != b.e / block) return a.e < b.e;
+    return a.t < b.t;
+}
+ll ans[maxn];
+ll sum, cnt[MAXN];
+int a[maxn], b[maxn], p[maxn];
+inline void add (int pos){ sum += cnt[b[pos]]++; }
+inline void sub (int pos){ sum -= --cnt[b[pos]]; }
+inline void update(int i, int t){
+    if(q[i].s <= p[t] && p[t] <= q[i].e) sub(p[t]);
+    b[p[t]] ^= a[p[t]];
+    swap(a[p[t]], a[p[t] + 1]);
+    b[p[t]] ^= a[p[t]];
+    if(q[i].s <= p[t] && p[t] <= q[i].e) add(p[t]);
+}
+void MO(int n, int m){
+    block = max(10, (int)pow(n, 2. / 3));
+    sort(q + 1, q + 1 + m);
+    sum = 0;
+    int s = 0, e = -1, t = 0;
+    for(int i = 1; i <= m; i++){
+        while(s < q[i].s) sub(s ++);
+        while(s > q[i].s) add(-- s);
+        while(e < q[i].e) add(++ e);
+        while(e > q[i].e) sub(e --);
+        while(t < q[i].t) update(i, ++t);
+        while(t > q[i].t) update(i, t--);
+        //cout << s << " " << e << " " << sum << endl;
+        ans[q[i].id] = 1ll * (e - s) * (e - s + 1) / 2 - sum;
+    }
+}
+int main()
+{
+    cin.tie(NULL);
+    ios::sync_with_stdio(0);
+    int n, m;
+    while(cin >> n >> m){
+        memset(cnt, 0, sizeof(cnt));
+        for(int i = 1; i <= n; i++){
+            cin >> a[i];
+            b[i] = b[i - 1] ^ a[i];
+        }
+        int qcnt = 0, kcnt = 0, opt, l, r, x;
+        for(int i = 1; i <= m; i++){
+            cin >> opt;
+            if(opt == 1){
+                cin >> l >> r;
+                q[++qcnt] = {l - 1, r, kcnt, qcnt };
+            }
+            else{
+                cin >> x;
+                p[++kcnt] = x;
+            }
+        }
+        MO(n, qcnt);
+        for(int i = 1; i <= qcnt; i++){
+            cout << ans[i] << endl;
+        }
+    }
+
+    return 0;
+}
