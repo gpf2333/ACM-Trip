@@ -1,0 +1,112 @@
+H 6621
+
+#include<bits/stdc++.h>
+ using namespace std;
+
+const int maxn = 1e5 + 10;
+const int M = maxn * 40;
+int T[maxn];///T[i]表示第i颗线段树的顶结点
+int lson[M],rson[M],c[M];///C[i]就代表第i个点的权值,即上述权值线段树的sum
+int X[maxn],K[maxn];     /// lson[i], rson[i] 表示第 i 个点的左儿子,右儿子是谁
+int tot = 0,en;          /// tot 用于动态开点
+int build(int l,int r){
+    int rt = tot ++;
+    c[rt] = 0;
+    if(l != r){
+        int mid = (l + r) >> 1;
+        lson[rt] = build(l,mid);
+        rson[rt] = build(mid + 1,r);
+    }
+    return rt;
+}
+
+int update(int rt,int pos,int val){
+    int newrt = tot ++,tmp = newrt;
+    c[newrt] = c[rt] + val;
+    int l = 1,r = en;
+    while(l < r){
+        int mid = (l + r) >> 1;
+        if(pos <= mid){
+            lson[newrt] = tot ++;
+            rson[newrt] = rson[rt];
+            newrt = lson[newrt];
+            rt = lson[rt];
+            r = mid;
+        }
+        else {
+            rson[newrt] = tot ++;
+            lson[newrt] = lson[rt];
+            newrt = rson[newrt];
+            rt = rson[rt];
+            l = mid + 1;
+        }
+        c[newrt] = c[rt] + val;
+    }
+    return tmp;
+}
+
+int query(int lrt,int rrt,int k){
+    int l = 1,r = en;
+    int sum = 0;
+    while(l < r){
+        int mid = (l + r) >> 1;
+        if(X[mid] <= k){
+            sum += c[lson[rrt]] - c[lson[lrt]];
+            l = mid + 1;
+            rrt = rson[rrt];
+            lrt = rson[lrt];
+        }
+        else {
+            r = mid;
+            lrt = lson[lrt];
+            rrt = lson[rrt];
+        }
+    }
+    if(l == r){
+        if(X[l] <= k)
+            sum += c[rrt] - c[lrt];
+    }
+    return sum;
+}
+
+int solve(int ll,int rr,int p,int kth){
+    int l = 0,r = 1e6;
+    int ans = r;
+    while(l <= r){
+        int mid = (l + r) >> 1;
+        int lef = p - mid,rig = p + mid;
+        if(query(T[ll - 1],T[rr],rig) - query(T[ll - 1],T[rr],lef - 1) >= kth){
+            r = mid - 1;
+            ans = min(ans,mid);
+        }
+        else l = mid + 1;
+    }
+    printf("%d\n",ans);
+    return ans;
+}
+
+int main() {
+    int t; scanf("%d",&t);
+    while(t --){
+        int n,m; scanf("%d%d",&n,&m);
+        for(int i = 1;i <= n;++ i){
+            scanf("%d",&K[i]);
+            X[i] = K[i];
+        }
+        sort(X + 1,X + 1 + n);
+        en = unique(X + 1,X + 1 + n) - X - 1;
+        tot = 0;
+        T[0] = build(1,en);
+        for(int i = 1;i <= n;++ i){
+            int pos = lower_bound(X + 1,X + 1 + en,K[i]) - X;
+            T[i] = update(T[i - 1],pos,1);
+        }
+        int x = 0;
+        while(m --){
+            int l,r,p,k; scanf("%d%d%d%d",&l,&r,&p,&k);
+            l ^= x; r ^= x; p ^= x; k ^= x;
+            x = solve(l,r,p,k);
+        }
+    }
+    return 0;
+}
