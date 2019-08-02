@@ -1,0 +1,29 @@
+vector<int> G[maxn];
+int sg[maxn];
+int Hash[maxn];
+void init(int n){
+    for(int i = 2; i <= n; i++){
+        G[i].push_back(1);
+        for(int j = 2; j < i; j++){
+            if(i % j == 0){
+                G[i].push_back(j);
+            }
+        }
+    }
+}
+void Sgsolve(int n){
+    int i, j;
+    memset(sg, 0, sizeof(sg));
+    for(i = 1; i <= n; i++){
+        memset(Hash, 0, sizeof(Hash));
+        for(j : G[i]){
+            Hash[sg[i - j]] = 1;
+        }
+        for(j = 0; ; j++){
+            if(Hash[j] == 0){
+                sg[i] = j;
+                break;
+            }
+        }
+    }
+}
