@@ -1,0 +1,91 @@
+HDU 6638
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const ll inf = 0x3f3f3f3f3f3f3f3f;
+const int maxn = 2e3 + 50;
+struct Point{
+    int x, y;
+    ll w;
+    bool operator < (Point & p1) const{
+        return x < p1.x;
+    }
+}p[maxn];
+int y[maxn];
+int pos[maxn];
+ll pre[maxn << 2], suf[maxn << 2], s[maxn << 2], v[maxn << 2];
+ll ans;
+void build(int x, int a, int b)
+{
+    pre[x] = suf[x] = s[x] = v[x] = 0;
+    if(a == b){
+        pos[a] = x;
+        return;
+    }
+    int mid = (a + b) >> 1;
+    build(x << 1, a, mid);
+    build(x << 1 | 1, mid + 1, b);
+}
+inline void change(int x, int p){
+    x = pos[x];
+    s[x] += p;
+    if(s[x] > 0) pre[x] = suf[x] = v[x] = s[x];
+    else pre[x] = suf[x] = v[x] = 0;
+    for(x >>= 1; x; x >>= 1){
+        pre[x] = max(pre[x << 1], s[x << 1] + pre[x << 1 | 1]);
+        suf[x] = max(suf[x << 1 | 1], s[x << 1 | 1] + suf[x << 1]);
+        s[x] = s[x << 1] + s[x << 1 | 1];
+        v[x] = max(max(v[x << 1], v[x << 1 | 1]), suf[x << 1] + pre[x << 1 | 1]);
+    }
+}
+int main(){
+    int T;
+    scanf("%d", &T);
+    while(T--){
+        int n;
+        scanf("%d", &n);
+        int cnt = 0;
+        for(int i = 1; i <= n; i++){
+            scanf("%d%d%d", &p[i].x, &p[i].y, &p[i].w);
+            y[++cnt] = p[i].y;
+        }
+        sort(y + 1, y + 1 + cnt);
+        int m = 0;
+        for(int i = 1; i <= cnt; i++){
+            if(i == 1 || y[i] != y[m])
+            y[++m] = y[i];
+        }
+        sort(p + 1, p + 1 + n);
+        ll ans = 0;
+        for(int i = 1; i <= n; i++)
+        {
+            p[i].y = lower_bound(y + 1, y + 1 + m, p[i].y) - y;
+        }
+        int i, j, k;
+        for(i = 1; i <= cnt; i++){
+            if(i == 1 || p[i].x != p[i - 1].x){
+                build(1, 1, cnt);
+                for(j = i; j <= n; j = k){
+                    for(k = j; k <= n && p[j].x == p[k].x; k++) change(p[k].y, p[k].w);
+                    if(ans < v[1])
+                        ans = v[1];
+                }
+            }
+        }
+        printf("%lld\n", ans);
+
+    }
+
+}
+/*
+8
+8
+-1 -5 100
+1 -10 -100
+1 0 4
+2 0 4
+2 1 -4
+2 2 4
+3 -5 100
+4 -5 100
+*/
