@@ -1,3 +1,93 @@
+
+牛客多校赛第七场 C Goveming sand 
+#include <bits/stdc++.h>
+using namespace std;
+#define lson rt << 1
+#define rson rt << 1 | 1
+#define Lson l, mid, lson
+#define Rson mid + 1, r, rson
+typedef long long ll;
+const int maxn = 1e5 + 100;
+const int max_cost = 205;
+struct node{
+    ll h, c, p;
+}tree[maxn];
+bool cmp(const node &n1, const node &n2){
+    return n1.h > n2.h;
+}
+ll sum[205 << 4];
+ll cnt[205 << 4];
+void init(){
+    memset(sum, 0, sizeof(sum));
+    memset(cnt, 0, sizeof(cnt));
+}
+void pushup(int rt){
+    sum[rt] = sum[lson] + sum[rson];
+    cnt[rt] = cnt[lson] + cnt[rson];
+}
+void update(int l, int r, int rt, ll c, ll p){
+    if(l == r){
+        cnt[rt] += p;
+        sum[rt] += p * c;
+        return;
+    }
+    int mid = (l + r) >> 1;
+    if(c <= mid){
+        update(Lson, c, p);
+    }
+    else{
+        update(Rson, c, p);
+    }
+    pushup(rt);
+}
+ll query(int l, int r, int rt, ll num){
+    if(num <= 0) return 0;
+    if(l == r) {
+        return 1LL * num * l;
+    }
+    int mid = (l + r) >> 1;
+    if(num >= cnt[lson])
+        return sum[lson] + query(Rson, num - cnt[lson]);
+    else
+        return query(Lson, num);
+}
+int main()
+{
+    int n;
+    while(~scanf("%d", &n)){
+        init();
+        ll sum1 = 0;
+        for(int i = 1; i <= n; i++){
+            scanf("%lld%lld%lld", &tree[i].h, &tree[i].c, &tree[i].p);
+            sum1 += tree[i].p;
+            update(1, max_cost, 1, tree[i].c, tree[i].p);
+        }
+        sort(tree + 1, tree + 1 + n, cmp);
+        ll ans = 1e18;
+        ll sum2 = 0;
+        for(int i = 1; i <= n; ){
+            int j;
+            ll tot = 0, totcost = 0;
+            for(j = i; j <= n && tree[j].h == tree[i].h; j ++){
+               tot += tree[j].p;
+               totcost += tree[j].c * tree[j].p;
+               update(1, max_cost, 1, tree[j].c, -tree[j].p);
+            }
+            sum1 -= tot;
+            ll tmp = query(1, max_cost, 1, sum1 - tot + 1) + sum2;
+            sum2 += totcost;
+            ans = min (ans, tmp);
+            i = j;
+        }
+        printf("%lld\n", ans);
+    }
+}
+
+
+
+
+
+
 #include <bits/stdc++.h>
 using namespace std;
 #define lson rt << 1
