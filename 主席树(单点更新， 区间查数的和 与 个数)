@@ -1,0 +1,101 @@
+
+牛客多校赛 第九场 H Cutting Bamboos
+https://ac.nowcoder.com/acm/contest/889/H
+
+
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define pil pair<int, ll>
+typedef long double ld;
+const int eps = 1e-6;
+const int maxn = 2e5 + 10;
+const int max_height = 1e5 + 5;
+int h[maxn];
+ll pre[maxn];
+
+int root[maxn];
+ll sum[maxn * 40];
+int cnt[maxn * 40];
+int lch[maxn * 40];
+int rch[maxn * 40];
+int tot = 0;
+
+inline void pushup(int rt){
+    sum[rt] = sum[lch[rt]] + sum[rch[rt]];
+    cnt[rt] = cnt[lch[rt]] + cnt[rch[rt]];
+}
+inline void newNode(int old, int cur){
+    lch[cur] = lch[old];
+    rch[cur] = rch[old];
+    sum[cur] = sum[old];
+    cnt[cur] = cnt[old];
+}
+void update(int old, int &cur, int l, int r, int p, int x){ // 单点更新
+    cur = ++ tot;
+    newNode(old, cur);
+    if(l == r){
+        sum[cur] += (ll)p * x;
+        cnt[cur] += x;
+        return;
+    }
+    int mid = (l + r) >> 1;
+    if(p <= mid) update(lch[old], lch[cur], l, mid, p, x);
+    else if(p > mid) update(rch[old], rch[cur], mid + 1, r, p, x);
+    pushup(cur);
+}
+template <typename T, typename U>
+pair<T, U> operator + (const pair<T, U> & p1, const pair<T, U> & p2){
+    return make_pair(p1.first + p2.first, p1.second + p2.second);
+}
+pil query(int old, int cur, int l, int r, int L, int R){
+    if(L <= l && r <= R){
+        return make_pair(cnt[cur] - cnt[old], sum[cur] - sum[old]);
+    }
+    int mid = (l + r) >> 1;
+    pil ans = {0, 0LL};
+    if(L <= mid) ans = ans + query(lch[old], lch[cur], l, mid, L, R);
+    if(R > mid) ans = ans + query(rch[old], rch[cur], mid + 1, r, L, R);
+    return ans;
+}
+
+int main()
+{
+    cin.tie(0);
+    cout.tie(0);
+    ios::sync_with_stdio(false);
+    int n, q;
+    cin >> n >> q;
+    pre[0] = 0;
+    for(int i = 1; i <= n; i++){
+        cin >> h[i];
+        pre[i] = pre[i - 1] + h[i];
+    }
+    tot = 0;
+    root[0] = 0;
+    for(int i = 1; i <= n; i++){
+        update(root[i - 1], root[i], 1, max_height, h[i], 1);
+    }
+    while(q--){
+        int l, r, x, y;
+        cin >> l >> r >> x >> y;
+        ld ans = 0;
+        ll tmp = pre[r] - pre[l - 1];
+        ld k = tmp * 1.0 / y * x;
+        ld lll = 0.0, rrr = 1.0 * max_height;
+        int ti = 50;
+        while(ti--){
+            ld mid = (lll + rrr) / 2;
+            pil a = query(root[l - 1], root[r], 1, max_height, ceil(mid), max_height);
+            ld b = 1.0 * a.second - 1.0 * a.first * mid;
+            if(b > k){
+                ans = mid;
+                lll = mid;
+            }
+            else{
+                rrr = mid;
+            }
+        }
+        cout << setprecision(15) << ans << endl;
+    }
+}
