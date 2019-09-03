@@ -1,0 +1,83 @@
+动态维护直线:
+
+BZOJ1568
+
+accode:
+
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef long double ld;
+const int maxn = 1e5 + 10;
+const int mx = 5e4 + 10;
+const double eps = 1e-12;
+int n;
+
+struct line{
+    double k, b;
+    int l, r, flag;
+    line(){}
+    line(double k, double b, int l, int r, int flag) : k(k), b(b), l(l), r(r), flag(flag){}
+}sgt[mx * 2];
+
+inline int get_id(int l, int r){
+    return (l + r) | (l != r);
+}
+
+inline double calc(line t, int pos){
+    return t.k * pos + t.b;
+}
+
+void update(int l, int r, line k){
+    int now = get_id(l, r);
+    if(k.l <= l && r <= k.r){
+        if(!sgt[now].flag) sgt[now] = k, sgt[now].flag = 1;
+        else if(calc(k, l) - calc(sgt[now], l) > eps && calc(k, r) - calc(sgt[now], r) > eps) {
+            sgt[now] = k;
+        }
+        else if(calc(k, l) - calc(sgt[now], l) > eps || calc(k, r) - calc(sgt[now], r) > eps){
+            int mid = l + r >> 1;
+            if(calc(k, mid) - calc(sgt[now], mid) > eps){
+                swap(sgt[now], k);
+            }
+            if(calc(k, l) - calc(sgt[now], l) > eps) update(l, mid, k);
+            else update(mid + 1, r, k);
+        }
+    }
+    else{
+        int mid = l + r >> 1;
+        if(k.l <= mid) update(l, mid, k);
+        if(k.r > mid) update(mid + 1, r, k);
+    }
+    return;
+}
+double query(int l, int r, int pos){
+    int now = get_id(l, r);
+    if(l == r) return calc(sgt[now], pos);
+    else{
+        int mid = l + r >> 1;
+        double ans = calc(sgt[now], pos);
+        if(pos <= mid) return max(ans, query(l, mid, pos));
+        else return max(ans, query(mid + 1, r, pos));
+    }
+}
+int main()
+{
+    scanf("%d", &n);
+    while(n--){
+        char op[10];
+        scanf("%s", op);
+        if(op[0] == 'P'){
+            double s, p;
+            scanf("%lf%lf", &s, &p);
+            line tmp(p, s - p, 1, mx - 10, 1);
+            update(1, mx - 10, tmp);
+        }
+        else{
+            int t;
+            scanf("%d", &t);
+            printf("%lld\n", (ll)(floor(query(1, mx - 10, t) / 100)));
+        }
+    }
+    return 0;
+}
