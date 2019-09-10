@@ -4,140 +4,129 @@
 
 https://www.luogu.org/problem/P3810#include <iostream>
 
+https://paste.ubuntu.com/p/QYhFxbmZ88/
 
 #include <bits/stdc++.h>
 using namespace std;
-const int maxn = 1e5+7;
-const int maxx = 2e5+7;
-int tree[maxx], ans[maxn], cnt[maxn];
-int lowbit(int k)
-{
-    return k & -k;
+
+const int maxn = 1e5 + 10;
+
+int sum[maxn << 1], n, k, ans[maxn], cnt[maxn];
+
+inline int lowbit(int x){
+    return x & (-x);
 }
-void add(int k, int val)
-{
-    while(k < maxx)
-    {
-        tree[k] += val;
-        k += lowbit(k);
+
+void add(int x, int val){
+    while(x < (maxn << 1)){
+        sum[x] += val;
+        x += lowbit(x);
     }
 }
-int sum(int k)
-{
-    int sum = 0;
-    while(k)
-    {
-        sum += tree[k];
-        k -= lowbit(k);
+
+int getsum(int x){
+    int res = 0;
+    while(x){
+        res += sum[x];
+        x -= lowbit(x);
     }
-    return sum;
+    return res;
 }
-void clear(int k)
-{
-    while(k < maxx)
-    {
-        if(tree[k]) tree[k] = 0, k += lowbit(k);
+
+inline void clear(int x){
+    while(x < (maxn << 1)){
+        if(sum[x]){
+            sum[x] = 0;
+            x += lowbit(x);
+        }
         else break;
     }
 }
-struct node
-{
+
+struct node{
     int a, b, c, id, cnt;
-    bool operator < (const node &t) const
-    {
-        if(a == t.a)
-        {
-            if(b == t.b)
-                return c < t.c;
-            return b < t.b;
+    node(){}
+    node(int a, int b, int c, int id, int cnt) : a(a), b(b), c(c), id(id), cnt(cnt){}
+    bool operator < (const node & n1) const {
+        if(a == n1.a){
+            if(b == n1.b) return c < n1.c;
+            return b < n1.b;
         }
-        return  a < t.a;
+        return a < n1.a;
     }
-}x[maxn], xx[maxn];
-void cdq(node x[], int l, int r)
-{
-    if(r-l==0) return;
-    int mid = (l+r)/2;
+}x[maxn], xx[maxn], tmp[maxn];
+
+void cdq(node x[], int l, int r) {
+    if(r - l == 0) return;
+    int mid = l + r >> 1;
     cdq(x, l, mid);
-    cdq(x, mid+1, r);
-    node tmp[r-l+1];
-    int index1 = l, index2 = mid+1, index = 0;
-    while(index1 <= mid && index2 <= r)
-    {
-        if(x[index1].b <= x[index2].b)
-        {
+    cdq(x, mid + 1, r);
+    int index1 = l, index2 = mid + 1, index = 0;
+    while(index1 <= mid && index2 <= r){
+        if(x[index1].b <= x[index2].b){
             tmp[index++] = x[index1];
             add(x[index1].c, x[index1].cnt);
-            index1++;
+            index1 ++;
         }
-        else
-        {
+        else{
             tmp[index++] = x[index2];
-            ans[x[index2].id] += sum(x[index2].c);
-            index2++;
+            ans[x[index2].id] += getsum(x[index2].c);
+            index2 ++;
         }
     }
-    while(index1 <= mid)
-    {
+    while(index1 <= mid){
         tmp[index++] = x[index1++];
     }
-    while(index2 <= r)
-    {
+    while(index2 <= r){
         tmp[index++] = x[index2];
-        ans[x[index2].id] += sum(x[index2].c);
+        ans[x[index2].id] += getsum(x[index2].c);
         index2++;
     }
-    for(int i = 0; i < index; i++)
-        x[i+l] = tmp[i];
-    for(int i = l; i <= r; i++)
+    for(int i = 0; i < index; i++){
+        x[l + i] = tmp[i];
+    }
+    for(int i = l; i <= r; i++){
         clear(x[i].c);
+    }
+    return;
 }
+
+
 int main()
 {
-    int n, k;
-
-//    freopen("data.txt", "r", stdin);
-//    freopen("output2.txt", "w", stdout);
+    ios::sync_with_stdio(false);
+    cin.tie(0), cout.tie(0);
     cin >> n >> k;
-    for(int i = 1; i <= n; i++)
-        scanf("%d%d%d", &x[i].a, &x[i].b, &x[i].c);
-    sort(x+1, x+1+n);
+    for(int i = 1; i <= n; i++){
+        cin >> x[i].a >> x[i].b >> x[i].c;
+    }
+    sort(x + 1, x + 1 + n);
     xx[1] = x[1];
     xx[1].cnt = 1;
     xx[1].id = 1;
-    int nn = 1;
-    for(int i = 2; i <= n; i++)
-    {
-        if(x[i-1].a == x[i].a && x[i-1].b == x[i].b && x[i-1].c == x[i].c)
-        {
-            xx[nn].cnt++;
+    int tot = 1;
+    for(int i = 2; i <= n; i++) {
+        if(x[i - 1].a == x[i].a && x[i - 1].b == x[i].b && x[i - 1].c == x[i].c){
+            xx[tot].cnt++;
             continue;
         }
-        xx[++nn] = x[i];
-        xx[nn].id = nn;
-        xx[nn].cnt = 1;
+        xx[++tot] = x[i];
+        xx[tot].cnt = 1;
+        xx[tot].id = tot;
     }
-    for(int i = 1; i <= nn; i++)
+    for(int i = 1; i <= tot; i++){
         x[i] = xx[i];
-    for(int i = 1; i <= nn; i++) {
+    }
+    for(int i = 1; i <= tot; i++){
         ans[i] = xx[i].cnt - 1;
     }
-//    for(int i = 1; i <= nn; i++) {
-//        cout << ans[i] << ' ';
-//    }
-//    cout << endl;
-    cdq(xx, 1, nn);
-//    for(int i =1; i <= nn; i++)
-//        cout << xx[i].cnt << ' ' ;
-//    cout << endl;
-//    for(int i = 1; i <= nn; i++)
-//        cout << ans[i] << ' ';
-//    cout << endl;
-    for(int i = 1; i <= nn; i++)
-    {
+    cdq(xx, 1, tot);
+    for(int i = 1; i <= tot; i++){
         cnt[ans[i]] += x[i].cnt;
     }
-    for(int i = 0; i < n; i++)
-        printf("%d\n", cnt[i]);
+    for(int i = 0; i < n; i++){
+        cout << cnt[i] << endl;
+    }
+
     return 0;
 }
